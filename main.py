@@ -13,7 +13,7 @@ NEWS_ENDPOINT = "https://newsapi.org/v2/everything"
 STOCK_API_KEY = "5CG6W0ZGOUHWPAG0"
 NEWS_API_KEY = "e1dfb3794fac4d5f918e1aaacbd7ab5e"
 TWILIO_SID = "AC0d072a022d6c1935415814ce5f224292"
-TWILIO_AUTH_TOKEN = "dc2d77adb8ce91bb43695673891731df"
+TWILIO_AUTH_TOKEN = "0cce5db19bcb5730b43dc0f399c7b098"
 
 stock_params = {
     "function": "TIME_SERIES_DAILY_ADJUSTED",
@@ -55,7 +55,7 @@ if abs(diff_percent) > 1:
     three_articles = articles[:3]
     print(three_articles)
 
-    formatted_articles = [f"{STOCK_NAME}: {up_down}{diff_percent}%\nHeadline: {article['title']}. \n" \
+    formatted_articles = [f"{STOCK_NAME}: {up_down}{diff_percent}%\nHeadline: {article['title']}. \n"
                           f"Brief: {article['description']}" for article in three_articles]
     print(formatted_articles)
 
