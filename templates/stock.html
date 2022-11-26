@@ -1,15 +1,21 @@
 {% include "header.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
+<style>
+  a {
+    color: #3366CC
+  }
+</style>
+
   <!-- Page Header -->
-  <header class="masthead" style="background-image: url('{{stock.articles}}')">
+  <header class="masthead" style="background-image: url('https://www.gannett-cdn.com/-mm-/2c66e9fa6eb290e62bf7cbc6010f40bfdafd2f07/c=0-416-7952-4889/local/-/media/2022/10/05/USATODAY/usatsports/stock-market-analytics-tablet_TlswVXo.jpg?width=2400&height=1350&fit=crop&format=pjpg&auto=webp')">
     <div class="overlay"></div>
     <div class="container">
       <div class="row">
         <div class="col-lg-8 col-md-10 mx-auto">
           <div class="post-heading">
-            <h1>{{stock.articles}}</h1>
-            <h2 class="subheading">{{stock.articles}}</h2>
+            <h1>{{stock.company_name}}</h1>
+            <h2 class="subheading">{{stock.stock_name}}</h2>
             <span class="meta">Followed by
               <a href="#">{{stock.follower.name}}</a>
               on {{stock.date}}</span>
@@ -24,8 +30,17 @@
     <div class="container">
       <div class="row">
         <div class="col-lg-8 col-md-10 mx-auto">
-            {{ stock.articles|safe }}
+          {{ articles_list[0]|safe }}
           <hr>
+          {% for i in range(1, len_list, 3) %}
+            {{ articles_list[i]|safe }}
+            <br>
+            {{ articles_list[i+1]|safe }}
+            <br>
+            <br>
+            <a href="{{ articles_list[i+2]|safe }}">read more</a>
+            <hr>
+          {% endfor %}
         </div>
       </div>
     </div>

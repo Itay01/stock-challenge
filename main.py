@@ -137,10 +137,14 @@ def logout():
     return redirect(url_for('get_all_stocks'))
 
 
-# @app.route("/stock/<int:stock_id>", methods=["GET", "POST"])
-# def show_stock(stock_id):
-#     requested_stock = Stocks.query.get(stock_id)
-#     return render_template("stock.html", stock=requested_stock, current_user=current_user)
+@app.route("/stock/<int:stock_id>", methods=["GET", "POST"])
+def show_stock(stock_id):
+    requested_stock = Stocks.query.get(stock_id)
+    articles_list = requested_stock.articles.split("\n")[:-1]
+    len_list = len(articles_list[1:])+1
+    print(articles_list, len_list)
+    return render_template("stock.html", stock=requested_stock, len_list=len_list,
+                           articles_list=articles_list, current_user=current_user)
 
 
 @app.route("/new-post", methods=["GET", "POST"])
@@ -155,7 +159,7 @@ def add_new_stock():
             stock_name=form.stock_name.data,
             follower=current_user,
             stock_price=stock_follower.closing_price,
-            articles=str(stock_follower.articles),
+            articles=stock_follower.message,
             date=date.today().strftime("%B %d, %Y")
         )
         db.session.add(new_stock)

@@ -21,6 +21,7 @@
       <div class="col-lg-8 col-md-10 mx-auto">
         {% for stock in all_stocks %}
         <div class="post-preview">
+          <a href="{{ url_for('show_stock', stock_id=stock.id) }}">
             <h2 class="post-title">
               {{stock.company_name}}
             </h2>

@@ -16,13 +16,12 @@ TWILIO_AUTH_TOKEN = "0cce5db19bcb5730b43dc0f399c7b098"
 class StockFollower:
     def __init__(self, stock_name, number):
         self.stock_name = stock_name
+        self.up_down = None
         self.company_name = None
         self.number = number
-        self.articles = None
+        self.message = None
         self.closing_price = None
         self.diff_percent = None
-        self.up_down = None
-        self.articles = None
 
     def get_stock_diff(self):
         stock_params = {
@@ -33,7 +32,6 @@ class StockFollower:
 
         response = requests.get(STOCK_ENDPOINT, params=stock_params)
         data = response.json()["Time Series (Daily)"]
-        print(data)
         data_list = [value for (key, value) in data.items()]
         yesterday_data = data_list[0]
         yesterday_closing_price = yesterday_data["4. close"]
@@ -51,7 +49,7 @@ class StockFollower:
         else:
             up_down = "🔻"
 
-        diff_percent = round((difference / float(yesterday_closing_price)) * 100)
+        diff_percent = abs(round((difference / float(yesterday_closing_price)) * 100))
         # print(diff_percent)
         self.diff_percent = diff_percent
         self.up_down = up_down
@@ -65,24 +63,31 @@ class StockFollower:
 
         news_response = requests.get(NEWS_ENDPOINT, params=news_params)
         articles = news_response.json()["articles"]
-
         three_articles = articles[:3]
         # print(three_articles)
-        self.articles = three_articles
-        print(self.articles)
+
+        up_down_message = f"{self.stock_name}: {self.up_down}{self.diff_percent}%"
+        formatted_articles = [f"Headline: {article['title']}. \n"
+                              f"Brief: {article['description']}\n{article['url']}" for article in three_articles]
+        # print(formatted_articles)
+
+        message = f"{up_down_message}\n"
+        for article in formatted_articles:
+            list_article = article.split("\n")
+            for info in list_article:
+                message += f"{info}\n"
+        self.message = message
 
     def send_messages(self):
-        formatted_articles = [f"{self.stock_name}: {self.up_down}{self.diff_percent}%\nHeadline: {article['title']}. \n"
-                              f"Brief: {article['description']}" for article in self.articles]
-        # print(formatted_articles)
-        self.articles = formatted_articles
+        send_message = f"{self.stock_name}: {self.up_down}{self.diff_percent}%\n"
+        for i in range(1, len(self.message)+1, 3):
+            send_message += "\n".join(self.message[i:].split("\n")) + "\n"
 
         client = Client(TWILIO_SID, TWILIO_AUTH_TOKEN)
 
-        for article in formatted_articles:
-            message = client.messages.create(
-                body=article,
-                from_=f"whatsapp:{VIRTUAL_TWILIO_NUMBER}",
-                to=f"whatsapp:{self.number}"
-            )
+        message = client.messages.create(
+            body=send_message,
+            from_=f"whatsapp:{VIRTUAL_TWILIO_NUMBER}",
+            to=f"whatsapp:{self.number}"
+        )
 
