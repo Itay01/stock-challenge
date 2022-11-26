@@ -1,0 +1,35 @@
+{% include "header.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+  <!-- Page Header -->
+  <header class="masthead" style="background-image: url('{{stock.articles}}')">
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="post-heading">
+            <h1>{{stock.articles}}</h1>
+            <h2 class="subheading">{{stock.articles}}</h2>
+            <span class="meta">Followed by
+              <a href="#">{{stock.follower.name}}</a>
+              on {{stock.date}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Post Content -->
+  <article>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+            {{ stock.articles|safe }}
+          <hr>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <hr>
+{% include "footer.html" %}

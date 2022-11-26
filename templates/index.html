@@ -1,0 +1,56 @@
+{% include "header.html" %}
+
+  <!-- Page Header -->
+  <header class="masthead" style="background-image: url('https://caltech-prod.s3.amazonaws.com/main/images/CollinCamerer-ShortSelling-0.2e16d0ba.fill-1600x810-c100.jpg')">
+    <div class="overlay"></div>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+          <div class="site-heading">
+            <h1>Stock Follower</h1>
+            <span class="subheading">Stock Follower By Itay Marom</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+ <!-- Main Content -->
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-md-10 mx-auto">
+        {% for stock in all_stocks %}
+        <div class="post-preview">
+            <h2 class="post-title">
+              {{stock.company_name}}
+            </h2>
+            <h3 class="post-subtitle">
+              {{stock.stock_name}}
+            </h3>
+          </a>
+          <p class="post-meta">followed by
+            <a href="#">{{stock.follower.name}}</a>
+            on {{stock.date}}
+
+            {% if current_user.id == 1 %}
+              <a href="{{url_for('delete_stock', stock_id=stock.id) }}">✘</a>
+            {% endif %}
+
+          </p>
+        </div>
+        <hr>
+        {% endfor %}
+
+
+        <!-- New Post -->
+        {% if current_user.id == 1 %}
+          <div class="clearfix">
+            <a class="btn btn-primary float-right" href="{{url_for('add_new_stock')}}">Follow New Stock</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <hr>
+
+{% include "footer.html" %}
