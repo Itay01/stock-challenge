@@ -7,7 +7,7 @@ class RegisterForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired()])
     password = PasswordField("Password", validators=[DataRequired()])
     name = StringField("Name", validators=[DataRequired()])
-    number = StringField("Phone Number", validators=[DataRequired()])
+    number = StringField("Phone Number")
     submit = SubmitField("Sign Me Up!")
 
 
@@ -19,4 +19,5 @@ class LoginForm(FlaskForm):
 
 class StockForm(FlaskForm):
     stock_name = StringField("Stock Name", validators=[DataRequired()])
-    submit = SubmitField("Save My Stock!")
+    points_amount = StringField("Points Amount", validators=[DataRequired()])
+    submit = SubmitField("Buy My Stock!")

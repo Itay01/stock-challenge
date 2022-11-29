@@ -1,5 +1,5 @@
 from stockfollower import StockFollower
-from flask import Flask, render_template, redirect, url_for, flash, request
+from flask import Flask, render_template, redirect, url_for, flash
 from flask_bootstrap import Bootstrap
 from flask_ckeditor import CKEditor
 from datetime import date
@@ -12,6 +12,7 @@ from forms import RegisterForm, LoginForm, StockForm
 from functools import wraps
 import os
 
+STOCK_POINTS = 50000
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('APP_KEY')
@@ -19,7 +20,7 @@ ckeditor = CKEditor(app)
 Bootstrap(app)
 
 # CONNECT TO DB
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///blog.db")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///stock.db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -38,6 +39,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(100))
     name = db.Column(db.String(100), unique=True)
+    stock_points = db.Column(db.Integer, nullable=False)
     number = db.Column(db.String(100), unique=True)
 
     stocks = relationship("Stocks", back_populates="follower")
@@ -56,6 +58,8 @@ class Stocks(db.Model):
     company_name = db.Column(db.String(100), nullable=False)
     articles = db.Column(db.String(250), nullable=False)
     stock_price = db.Column(db.Integer, nullable=False)
+    stock_value = db.Column(db.Integer, nullable=False)
+    stock_points = db.Column(db.Integer, nullable=False)
     date = db.Column(db.String(250), nullable=False)
 
 
@@ -74,13 +78,41 @@ def admin_only(f):
     return decorated_function
 
 
+def login_only(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        try:
+            if not current_user.is_authenticated:
+                return abort(403)
+        except AttributeError:
+            return abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def logout_only(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        try:
+            if current_user.is_authenticated:
+                return abort(403)
+        except AttributeError:
+            return abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 @app.route('/')
 def get_all_stocks():
-    stocks = Stocks.query.all()
+    if current_user.is_authenticated:
+        stocks = Stocks.query.filter_by(follower_id=current_user.id).all()
+    else:
+        stocks = []
     return render_template("index.html", all_stocks=stocks, current_user=current_user)
 
 
 @app.route('/register', methods=["GET", "POST"])
+@logout_only
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
@@ -95,12 +127,21 @@ def register():
             method='pbkdf2:sha256',
             salt_length=8
         )
-        new_user = User(
-            email=form.email.data,
-            password=hash_and_salted_password,
-            name=form.name.data,
-            number=form.number.data
-        )
+        if form.number.data == "":
+            new_user = User(
+                email=form.email.data,
+                password=hash_and_salted_password,
+                name=form.name.data,
+                stock_points=STOCK_POINTS
+            )
+        else:
+            new_user = User(
+                email=form.email.data,
+                password=hash_and_salted_password,
+                name=form.name.data,
+                number=form.number.data,
+                stock_points=STOCK_POINTS
+            )
         db.session.add(new_user)
         db.session.commit()
         login_user(new_user)
@@ -110,6 +151,7 @@ def register():
 
 
 @app.route('/login', methods=["GET", "POST"])
+@logout_only
 def login():
     form = LoginForm()
 
@@ -132,14 +174,18 @@ def login():
 
 
 @app.route('/logout')
+@login_only
 def logout():
     logout_user()
     return redirect(url_for('get_all_stocks'))
 
 
 @app.route("/stock/<int:stock_id>", methods=["GET", "POST"])
+@login_only
 def show_stock(stock_id):
     requested_stock = Stocks.query.get(stock_id)
+    if requested_stock.follower_id != current_user.id:
+        return redirect(url_for('get_all_stocks'))
     articles_list = requested_stock.articles.split("\n")[:-1]
     len_list = len(articles_list[1:])+1
     print(articles_list, len_list)
@@ -147,25 +193,48 @@ def show_stock(stock_id):
                            articles_list=articles_list, current_user=current_user)
 
 
-@app.route("/new-post", methods=["GET", "POST"])
-@admin_only
-def add_new_stock():
+@app.route("/new-stock", methods=["GET", "POST"])
+@login_only
+def buy_new_stock():
     form = StockForm()
     if form.validate_on_submit():
+        try:
+            stock_follower = set_follower(form.stock_name.data, current_user.number)
+            stock_follower.get_stock()
+        except KeyError:
+            flash('Invalid stock symbol!')
+            return redirect(url_for('buy_new_stock'))
 
-        stock_follower = set_follower(form.stock_name.data, current_user.number)
+        stock_price = float(stock_follower.closing_price)
+        points_amount = float(form.points_amount.data)
+        stock_points = points_amount / stock_price
+
+        if current_user.stock_points - points_amount < 0:
+            flash('Invalid points amount!')
+            return redirect(url_for('buy_new_stock'))
+        elif form.stock_name.data in [s.stock_name for s in Stocks.query.filter_by(follower_id=current_user.id).all()]:
+            flash('You already bought this stock!')
+            return redirect(url_for('buy_new_stock'))
+
+        stock_follower.get_stock_diff(stock_follower.closing_price)
+        stock_follower.get_articles()
+
         new_stock = Stocks(
             company_name=stock_follower.company_name,
             stock_name=form.stock_name.data,
             follower=current_user,
-            stock_price=stock_follower.closing_price,
+            stock_price=stock_price,
+            stock_value=stock_price,
+            stock_points=stock_points,
             articles=stock_follower.message,
             date=date.today().strftime("%B %d, %Y")
         )
+
+        current_user.stock_points = current_user.stock_points - points_amount
         db.session.add(new_stock)
         db.session.commit()
         return redirect(url_for("get_all_stocks"))
-    return render_template("make-stock.html", form=form, current_user=current_user)
+    return render_template("buy-stock.html", form=form, current_user=current_user)
 
 
 @app.route("/delete/<int:stock_id>")
@@ -179,8 +248,6 @@ def delete_stock(stock_id):
 
 def set_follower(stock_name, number):
     stock_follower = StockFollower(stock_name, number)
-    stock_follower.get_stock_diff()
-    stock_follower.get_articles()
     return stock_follower
 
 

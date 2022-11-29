@@ -30,7 +30,11 @@
     <div class="container">
       <div class="row">
         <div class="col-lg-8 col-md-10 mx-auto">
-          {{ articles_list[0]|safe }}
+          <p>Points bought: {{ stock.stock_points }}</p>
+          <p>Buying Price: {{ stock.stock_price }} 💲</p>
+          <p>Current Price: {{ stock.stock_value }} 💲</p>
+          <p>Change (percentage): {{ articles_list[0]|safe }}</p>
+          <p>profit (points): {{ (stock.stock_value * stock.stock_points) - (stock.stock_points * stock.stock_price) }} 💲</p>
           <hr>
           {% for i in range(1, len_list, 3) %}
             {{ articles_list[i]|safe }}

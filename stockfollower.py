@@ -23,7 +23,7 @@ class StockFollower:
         self.closing_price = None
         self.diff_percent = None
 
-    def get_stock_diff(self):
+    def get_stock(self):
         stock_params = {
             "function": "TIME_SERIES_DAILY_ADJUSTED",
             "symbol": self.stock_name,
@@ -36,20 +36,16 @@ class StockFollower:
         yesterday_data = data_list[0]
         yesterday_closing_price = yesterday_data["4. close"]
         self.closing_price = yesterday_closing_price
-        # print(yesterday_closing_price)
 
-        day_before_yesterday_data = data_list[1]
-        day_before_yesterday_closing_price = day_before_yesterday_data["4. close"]
-        # print(day_before_yesterday_closing_price)
-
-        difference = float(yesterday_closing_price) - float(day_before_yesterday_closing_price)
+    def get_stock_diff(self, buying_price):
+        difference = float(self.closing_price) - float(buying_price)
         up_down = None
         if difference > 0:
             up_down = "🔺"
         else:
             up_down = "🔻"
 
-        diff_percent = abs(round((difference / float(yesterday_closing_price)) * 100))
+        diff_percent = abs(round((difference / float(buying_price)) * 100))
         # print(diff_percent)
         self.diff_percent = diff_percent
         self.up_down = up_down
@@ -66,7 +62,8 @@ class StockFollower:
         three_articles = articles[:3]
         # print(three_articles)
 
-        up_down_message = f"{self.stock_name}: {self.up_down}{self.diff_percent}%"
+        # up_down_message = f"{self.stock_name}: {self.up_down}{self.diff_percent}%"
+        up_down_message = f"{self.up_down}{self.diff_percent}%"
         formatted_articles = [f"Headline: {article['title']}. \n"
                               f"Brief: {article['description']}\n{article['url']}" for article in three_articles]
         # print(formatted_articles)
@@ -78,16 +75,16 @@ class StockFollower:
                 message += f"{info}\n"
         self.message = message
 
-    def send_messages(self):
-        send_message = f"{self.stock_name}: {self.up_down}{self.diff_percent}%\n"
-        for i in range(1, len(self.message)+1, 3):
-            send_message += "\n".join(self.message[i:].split("\n")) + "\n"
-
-        client = Client(TWILIO_SID, TWILIO_AUTH_TOKEN)
-
-        message = client.messages.create(
-            body=send_message,
-            from_=f"whatsapp:{VIRTUAL_TWILIO_NUMBER}",
-            to=f"whatsapp:{self.number}"
-        )
+    # def send_messages(self):
+    #     send_message = f"{self.stock_name}: {self.up_down}{self.diff_percent}%\n"
+    #     for i in range(1, len(self.message)+1, 3):
+    #         send_message += "\n".join(self.message[i:].split("\n")) + "\n"
+    #
+    #     client = Client(TWILIO_SID, TWILIO_AUTH_TOKEN)
+    #
+    #     message = client.messages.create(
+    #         body=send_message,
+    #         from_=f"whatsapp:{VIRTUAL_TWILIO_NUMBER}",
+    #         to=f"whatsapp:{self.number}"
+    #     )
 
