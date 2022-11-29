@@ -1,11 +1,6 @@
 {% include "header.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-<style>
-  a {
-    color: #3366CC
-  }
-</style>
 
   <!-- Page Header -->
   <header class="masthead" style="background-image: url('https://www.gannett-cdn.com/-mm-/2c66e9fa6eb290e62bf7cbc6010f40bfdafd2f07/c=0-416-7952-4889/local/-/media/2022/10/05/USATODAY/usatsports/stock-market-analytics-tablet_TlswVXo.jpg?width=2400&height=1350&fit=crop&format=pjpg&auto=webp')">
@@ -16,7 +11,7 @@
           <div class="post-heading">
             <h1>{{stock.company_name}}</h1>
             <h2 class="subheading">{{stock.stock_name}}</h2>
-            <span class="meta">Followed by
+            <span class="meta">Bought by
               <a href="#">{{stock.follower.name}}</a>
               on {{stock.date}}</span>
           </div>
@@ -42,7 +37,7 @@
             {{ articles_list[i+1]|safe }}
             <br>
             <br>
-            <a href="{{ articles_list[i+2]|safe }}">read more</a>
+            <a style="color: #3366CC" href="{{ articles_list[i+2]|safe }}">read more</a>
             <hr>
           {% endfor %}
         </div>

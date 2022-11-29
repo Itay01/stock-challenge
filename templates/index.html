@@ -29,11 +29,9 @@
               {{stock.stock_name}}
             </h3>
           </a>
-          <p class="post-meta">followed by
+          <p class="post-meta">bought by
             <a href="#">{{stock.follower.name}}</a>
             on {{stock.date}}
-
-            <a href="{{url_for('delete_stock', stock_id=stock.id) }}">✘</a>
 
           </p>
         </div>

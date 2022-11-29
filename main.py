@@ -105,7 +105,10 @@ def logout_only(f):
 @app.route('/')
 def get_all_stocks():
     if current_user.is_authenticated:
-        stocks = Stocks.query.filter_by(follower_id=current_user.id).all()
+        if current_user.id == 1:
+            stocks = Stocks.query.all()
+        else:
+            stocks = Stocks.query.filter_by(follower_id=current_user.id).all()
     else:
         stocks = []
     return render_template("index.html", all_stocks=stocks, current_user=current_user)
@@ -237,13 +240,13 @@ def buy_new_stock():
     return render_template("buy-stock.html", form=form, current_user=current_user)
 
 
-@app.route("/delete/<int:stock_id>")
-@admin_only
-def delete_stock(stock_id):
-    stock_to_delete = Stocks.query.get(stock_id)
-    db.session.delete(stock_to_delete)
-    db.session.commit()
-    return redirect(url_for('get_all_stocks'))
+# @app.route("/delete/<int:stock_id>")
+# @admin_only
+# def delete_stock(stock_id):
+#     stock_to_delete = Stocks.query.get(stock_id)
+#     db.session.delete(stock_to_delete)
+#     db.session.commit()
+#     return redirect(url_for('get_all_stocks'))
 
 
 def set_follower(stock_name, number):
