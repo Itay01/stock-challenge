@@ -7,40 +7,72 @@
       <div class="row">
         <div class="col-lg-8 col-md-10 mx-auto">
           <div class="site-heading">
-            <h1>Stock Follower</h1>
-            <span class="subheading">Stock Follower By Itay Marom</span>
+            <h1>Stock Challenge</h1>
+            <span class="subheading">Stock Challenge By Itay Marom</span>
           </div>
         </div>
       </div>
     </div>
   </header>
 
+  <head>
+    <style>
+    table {
+      font-family: arial, sans-serif;
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    td, th {
+      border: 1px solid #dddddd;
+      text-align: left;
+      padding: 8px;
+    }
+
+    tr:nth-child(even) {
+      background-color: #dddddd;
+    }
+    </style>
+  </head>
+
  <!-- Main Content -->
   <div class="container">
     <div class="row">
       <div class="col-lg-8 col-md-10 mx-auto">
-        {% for stock in all_stocks %}
         <div class="post-preview">
-          <a href="{{ url_for('show_stock', stock_id=stock.id) }}">
-            <h2 class="post-title">
-              {{stock.company_name}}
-            </h2>
-            <h3 class="post-subtitle">
-              {{stock.stock_name}}
-            </h3>
-          </a>
-          <p class="post-meta">bought by
-            <a href="#">{{stock.follower.name}}</a>
-            on {{stock.date}}
+          {% if all_stocks %}
+            <h4>Current Balance: {{ current_user.stock_points }} 💲</h4>
 
-          </p>
+            <hr>
+            <table>
+              <tr>
+                <th>Stock Symbol</th>
+                <th>Units</th>
+                <th>Buying Price</th>
+                <th>Current Price</th>
+                <th>Change</th>
+                <th>Current Value</th>
+              </tr>
+              {% for stock in all_stocks %}
+                <tr>
+                  <td><a href="{{ url_for('show_stock', stock_id=stock.id) }}">{{ stock.stock_name }}</a></td>
+                  <td>{{ stock.stock_units }}</td>
+                  <td>{{ stock.stock_price }} 💲</td>
+                  <td>{{ stock.stock_value }} 💲</td>
+                  <td>{{ stock.stock_diff }} %</td>
+                  <td>{{ stock.stock_units_value }} 💲</td>
+                </tr>
+              {% endfor %}
+            </table>
         </div>
         <hr>
-        {% endfor %}
 
+        <h4>Total Value: {{ current_user.stocks_value }} 💲</h4>
 
-        <!-- New Post -->
+        {% endif %}
+        <!-- New Stock -->
         {% if current_user.is_authenticated %}
+          <hr>
           <div class="clearfix">
             <a class="btn btn-primary float-right" href="{{url_for('buy_new_stock')}}">Buy New Stock</a>
           </div>

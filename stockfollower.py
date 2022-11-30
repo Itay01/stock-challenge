@@ -75,16 +75,17 @@ class StockFollower:
                 message += f"{info}\n"
         self.message = message
 
-    # def send_messages(self):
-    #     send_message = f"{self.stock_name}: {self.up_down}{self.diff_percent}%\n"
-    #     for i in range(1, len(self.message)+1, 3):
-    #         send_message += "\n".join(self.message[i:].split("\n")) + "\n"
-    #
-    #     client = Client(TWILIO_SID, TWILIO_AUTH_TOKEN)
-    #
-    #     message = client.messages.create(
-    #         body=send_message,
-    #         from_=f"whatsapp:{VIRTUAL_TWILIO_NUMBER}",
-    #         to=f"whatsapp:{self.number}"
-    #     )
+    def send_messages(self):
+        if self.diff_percent > 1 and self.number != "":
+            send_message = f"{self.stock_name}: {self.up_down}{self.diff_percent}%\n"
+            for i in range(1, len(self.message)+1, 3):
+                send_message += "\n".join(self.message[i:].split("\n")) + "\n"
+
+            client = Client(TWILIO_SID, TWILIO_AUTH_TOKEN)
+
+            message = client.messages.create(
+                body=send_message,
+                from_=f"whatsapp:{VIRTUAL_TWILIO_NUMBER}",
+                to=f"whatsapp:{self.number}"
+            )
 

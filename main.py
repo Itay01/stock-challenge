@@ -41,6 +41,7 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(100), unique=True)
     stock_points = db.Column(db.Integer, nullable=False)
     number = db.Column(db.String(100), unique=True)
+    stocks_value = db.Column(db.Integer, nullable=False)
 
     stocks = relationship("Stocks", back_populates="follower")
 
@@ -51,7 +52,7 @@ class Stocks(db.Model):
 
     # Create Foreign Key, "users.id" the users refers to the tablename of User.
     follower_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    # Create reference to the User object, the "posts" refers to the posts protperty in the User class.
+    # Create reference to the User object, the "posts" refers to the posts' property in the User class.
     follower = relationship("User", back_populates="stocks")
 
     stock_name = db.Column(db.String(100), nullable=False)
@@ -59,7 +60,9 @@ class Stocks(db.Model):
     articles = db.Column(db.String(250), nullable=False)
     stock_price = db.Column(db.Integer, nullable=False)
     stock_value = db.Column(db.Integer, nullable=False)
-    stock_points = db.Column(db.Integer, nullable=False)
+    stock_units = db.Column(db.Integer, nullable=False)
+    stock_diff = db.Column(db.Integer, nullable=False)
+    stock_units_value = db.Column(db.Integer, nullable=False)
     date = db.Column(db.String(250), nullable=False)
 
 
@@ -104,6 +107,7 @@ def logout_only(f):
 
 @app.route('/')
 def get_all_stocks():
+    # Todo: Add user balance in the main screen.
     if current_user.is_authenticated:
         if current_user.id == 1:
             stocks = Stocks.query.all()
@@ -111,6 +115,7 @@ def get_all_stocks():
             stocks = Stocks.query.filter_by(follower_id=current_user.id).all()
     else:
         stocks = []
+
     return render_template("index.html", all_stocks=stocks, current_user=current_user)
 
 
@@ -135,7 +140,8 @@ def register():
                 email=form.email.data,
                 password=hash_and_salted_password,
                 name=form.name.data,
-                stock_points=STOCK_POINTS
+                stock_points=STOCK_POINTS,
+                stocks_value=STOCK_POINTS
             )
         else:
             new_user = User(
@@ -143,7 +149,8 @@ def register():
                 password=hash_and_salted_password,
                 name=form.name.data,
                 number=form.number.data,
-                stock_points=STOCK_POINTS
+                stock_points=STOCK_POINTS,
+                stocks_value=STOCK_POINTS
             )
         db.session.add(new_user)
         db.session.commit()
@@ -187,18 +194,21 @@ def logout():
 @login_only
 def show_stock(stock_id):
     requested_stock = Stocks.query.get(stock_id)
-    if requested_stock.follower_id != current_user.id:
+    if requested_stock.follower_id != current_user.id and current_user.id != 1:
         return redirect(url_for('get_all_stocks'))
+
     articles_list = requested_stock.articles.split("\n")[:-1]
     len_list = len(articles_list[1:])+1
-    print(articles_list, len_list)
+    profit = requested_stock.stock_units * (requested_stock.stock_value - requested_stock.stock_price)
+
     return render_template("stock.html", stock=requested_stock, len_list=len_list,
-                           articles_list=articles_list, current_user=current_user)
+                           articles_list=articles_list, current_user=current_user, profit_points=profit)
 
 
 @app.route("/new-stock", methods=["GET", "POST"])
 @login_only
 def buy_new_stock():
+    # Todo: Add current balance.
     form = StockForm()
     if form.validate_on_submit():
         try:
@@ -210,10 +220,10 @@ def buy_new_stock():
 
         stock_price = float(stock_follower.closing_price)
         points_amount = float(form.points_amount.data)
-        stock_points = points_amount / stock_price
+        stock_units = points_amount / stock_price
 
         if current_user.stock_points - points_amount < 0:
-            flash('Invalid points amount!')
+            flash('You do not have enough points!')
             return redirect(url_for('buy_new_stock'))
         elif form.stock_name.data in [s.stock_name for s in Stocks.query.filter_by(follower_id=current_user.id).all()]:
             flash('You already bought this stock!')
@@ -228,25 +238,33 @@ def buy_new_stock():
             follower=current_user,
             stock_price=stock_price,
             stock_value=stock_price,
-            stock_points=stock_points,
+            stock_units=round(stock_units, 2),
+            stock_diff=stock_follower.diff_percent,
+            stock_units_value=round(stock_units*stock_price, 2),
             articles=stock_follower.message,
             date=date.today().strftime("%B %d, %Y")
         )
 
-        current_user.stock_points = current_user.stock_points - points_amount
+        current_user.stock_points = round(current_user.stock_points - points_amount, 2)
+        current_user.stocks_value = round(current_user.stock_points + new_stock.stock_units_value, 2)
         db.session.add(new_stock)
         db.session.commit()
         return redirect(url_for("get_all_stocks"))
     return render_template("buy-stock.html", form=form, current_user=current_user)
 
 
-# @app.route("/delete/<int:stock_id>")
-# @admin_only
-# def delete_stock(stock_id):
-#     stock_to_delete = Stocks.query.get(stock_id)
-#     db.session.delete(stock_to_delete)
-#     db.session.commit()
-#     return redirect(url_for('get_all_stocks'))
+@app.route("/sell-stock/<int:stock_id>", methods=["GET", "POST"])
+@login_only
+def sell_stock(stock_id):
+    stock_to_sell = Stocks.query.get(stock_id)
+    if current_user.id != stock_to_sell.follower_id and current_user.id != 1:
+        return redirect(url_for("get_all_stocks"))
+
+    total_value = stock_to_sell.stock_units * stock_to_sell.stock_value
+    current_user.stock_points = round(current_user.stock_points + total_value, 2)
+    db.session.delete(stock_to_sell)
+    db.session.commit()
+    return redirect(url_for("get_all_stocks"))
 
 
 def set_follower(stock_name, number):

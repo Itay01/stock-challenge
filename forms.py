@@ -18,6 +18,6 @@ class LoginForm(FlaskForm):
 
 
 class StockForm(FlaskForm):
-    stock_name = StringField("Stock Name", validators=[DataRequired()])
-    points_amount = StringField("Points Amount", validators=[DataRequired()])
+    stock_name = StringField("Stock Symbol", validators=[DataRequired()])
+    points_amount = StringField("Purchase Value 💲", validators=[DataRequired()])
     submit = SubmitField("Buy My Stock!")
