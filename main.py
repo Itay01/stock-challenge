@@ -241,14 +241,14 @@ def buy_new_stock():
             follower=current_user,
             stock_price=stock_price,
             stock_value=stock_price,
-            stock_units=round(stock_units, 2),
+            stock_units=stock_units,
             stock_diff=stock_follower.diff_percent,
-            stock_units_value=round(stock_units*stock_price, 2),
+            stock_units_value=stock_units*stock_price,
             articles=stock_follower.message,
             date=date.today().strftime("%B %d, %Y")
         )
 
-        current_user.stock_points = round(current_user.stock_points - points_amount, 2)
+        current_user.stock_points = current_user.stock_points - points_amount
         current_user.stocks_value = current_user.stocks_value + new_stock.stock_units_value
         db.session.add(new_stock)
         db.session.commit()
@@ -264,8 +264,8 @@ def sell_stock(stock_id):
         return redirect(url_for("get_all_stocks"))
 
     total_value = stock_to_sell.stock_units * stock_to_sell.stock_value
-    current_user.stock_points = round(current_user.stock_points + total_value, 2)
-    current_user.stocks_value = round(current_user.stocks_value - total_value, 2)
+    current_user.stock_points = current_user.stock_points + total_value
+    current_user.stocks_value = current_user.stocks_value - total_value
     db.session.delete(stock_to_sell)
     db.session.commit()
     return redirect(url_for("get_all_stocks"))

@@ -1,16 +1,17 @@
 import requests
+import os
 from twilio.rest import Client
 import yfinance as yf
 
-VIRTUAL_TWILIO_NUMBER = "+14155238886"
+VIRTUAL_TWILIO_NUMBER = os.environ.get("NUMBER")
 
 STOCK_ENDPOINT = "https://www.alphavantage.co/query"
 NEWS_ENDPOINT = "https://newsapi.org/v2/everything"
 
-STOCK_API_KEY = "5CG6W0ZGOUHWPAG0"
-NEWS_API_KEY = "e1dfb3794fac4d5f918e1aaacbd7ab5e"
-TWILIO_SID = "AC0d072a022d6c1935415814ce5f224292"
-TWILIO_AUTH_TOKEN = "0cce5db19bcb5730b43dc0f399c7b098"
+STOCK_API_KEY = os.environ.get("STOCK_KEY")
+NEWS_API_KEY = os.environ.get("NEWS_KEY")
+TWILIO_SID = os.environ.get("TWILIO_SID")
+TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_TOKEN")
 
 
 class StockFollower:

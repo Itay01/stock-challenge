@@ -25,11 +25,11 @@
     <div class="container">
       <div class="row">
         <div class="col-lg-8 col-md-10 mx-auto">
-          <p>Units bought: {{ stock.stock_units }}</p>
+          <p>Units bought: <script>document.write(Math.round(({{ stock.stock_units }} + Number.EPSILON) * 100) / 100);</script></p>
           <p>Buying Price: {{ stock.stock_price }} 💲</p>
           <p>Current Price: {{ stock.stock_value }} 💲</p>
           <p>Change (Percentage): {{ articles_list[0]|safe }}</p>
-          <p>Profit: {{ profit_points }} 💲</p>
+          <p>Profit: <script>document.write(Math.round(({{ profit_points }} + Number.EPSILON) * 100) / 100);</script> 💲</p>
           <div class="clearfix">
              <a class="btn btn-danger float-right" href="{{url_for('sell_stock', stock_id=stock.id)}}">Sell This Stock</a>
           </div>

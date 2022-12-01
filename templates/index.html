@@ -41,7 +41,7 @@
       <div class="col-lg-8 col-md-10 mx-auto">
         <div class="post-preview">
             {% if current_user.is_authenticated %}
-              <h4>Current Balance: {{ current_user.stock_points }} 💲</h4>
+              <h4>Current Balance: <script>document.write(Math.round(({{ current_user.stock_points }} + Number.EPSILON) * 100) / 100);</script> 💲</h4>
               <hr>
             {% endif %}
 
@@ -58,11 +58,15 @@
               {% for stock in all_stocks %}
                 <tr>
                   <td><a href="{{ url_for('show_stock', stock_id=stock.id) }}">{{ stock.stock_name }}</a></td>
-                  <td>{{ stock.stock_units }}</td>
+                  <td>
+                    <script>document.write(Math.round(({{ stock.stock_units }} + Number.EPSILON) * 100) / 100);</script>
+                  </td>
                   <td>{{ stock.stock_price }} 💲</td>
                   <td>{{ stock.stock_value }} 💲</td>
                   <td>{{ stock.stock_diff }} %</td>
-                  <td>{{ stock.stock_units_value }} 💲</td>
+                  <td>
+                    <script>document.write(Math.round(({{ stock.stock_units_value }} + Number.EPSILON) * 100) / 100);</script>
+                     💲</td>
                 </tr>
               {% endfor %}
             </table>
@@ -71,9 +75,9 @@
         {% endif %}
 
         {% if current_user.is_authenticated %}
-          <h4>Total Invested: {{ current_user.stocks_value }} 💲</h4>
+          <h4>Total Invested: <script>document.write(Math.round(({{ current_user.stocks_value }} + Number.EPSILON) * 100) / 100);</script> 💲</h4>
           <br>
-          <h4>Total Money: {{ current_user.stocks_value + current_user.stock_points }} 💲</h4>
+          <h4>Total Money: <script>document.write(Math.round(({{ current_user.stock_points + current_user.stocks_value }} + Number.EPSILON) * 100) / 100);</script> 💲</h4>
         {% endif %}
 
         <!-- New Stock -->
