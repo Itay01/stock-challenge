@@ -12,6 +12,9 @@ from forms import RegisterForm, LoginForm, StockForm
 from functools import wraps
 import os
 
+# Todo: show the money that is invested.
+
+
 STOCK_POINTS = 50000
 
 app = Flask(__name__)
@@ -141,7 +144,7 @@ def register():
                 password=hash_and_salted_password,
                 name=form.name.data,
                 stock_points=STOCK_POINTS,
-                stocks_value=STOCK_POINTS
+                stocks_value=0
             )
         else:
             new_user = User(
@@ -150,7 +153,7 @@ def register():
                 name=form.name.data,
                 number=form.number.data,
                 stock_points=STOCK_POINTS,
-                stocks_value=STOCK_POINTS
+                stocks_value=0
             )
         db.session.add(new_user)
         db.session.commit()
@@ -223,7 +226,7 @@ def buy_new_stock():
         stock_units = points_amount / stock_price
 
         if current_user.stock_points - points_amount < 0:
-            flash('You do not have enough points!')
+            flash('You do not have enough money!')
             return redirect(url_for('buy_new_stock'))
         elif form.stock_name.data in [s.stock_name for s in Stocks.query.filter_by(follower_id=current_user.id).all()]:
             flash('You already bought this stock!')
@@ -246,7 +249,7 @@ def buy_new_stock():
         )
 
         current_user.stock_points = round(current_user.stock_points - points_amount, 2)
-        current_user.stocks_value = round(current_user.stock_points + new_stock.stock_units_value, 2)
+        current_user.stocks_value = current_user.stocks_value + new_stock.stock_units_value
         db.session.add(new_stock)
         db.session.commit()
         return redirect(url_for("get_all_stocks"))
@@ -262,6 +265,7 @@ def sell_stock(stock_id):
 
     total_value = stock_to_sell.stock_units * stock_to_sell.stock_value
     current_user.stock_points = round(current_user.stock_points + total_value, 2)
+    current_user.stocks_value = round(current_user.stocks_value - total_value, 2)
     db.session.delete(stock_to_sell)
     db.session.commit()
     return redirect(url_for("get_all_stocks"))

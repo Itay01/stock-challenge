@@ -8,7 +8,7 @@
         <div class="col-lg-8 col-md-10 mx-auto">
           <div class="site-heading">
             <h1>Stock Challenge</h1>
-            <span class="subheading">Stock Challenge By Itay Marom</span>
+            <span class="subheading">By Itay Marom</span>
           </div>
         </div>
       </div>
@@ -40,10 +40,12 @@
     <div class="row">
       <div class="col-lg-8 col-md-10 mx-auto">
         <div class="post-preview">
-          {% if all_stocks %}
-            <h4>Current Balance: {{ current_user.stock_points }} 💲</h4>
+            {% if current_user.is_authenticated %}
+              <h4>Current Balance: {{ current_user.stock_points }} 💲</h4>
+              <hr>
+            {% endif %}
 
-            <hr>
+            {% if all_stocks %}
             <table>
               <tr>
                 <th>Stock Symbol</th>
@@ -66,10 +68,14 @@
             </table>
         </div>
         <hr>
-
-        <h4>Total Value: {{ current_user.stocks_value }} 💲</h4>
-
         {% endif %}
+
+        {% if current_user.is_authenticated %}
+          <h4>Total Invested: {{ current_user.stocks_value }} 💲</h4>
+          <br>
+          <h4>Total Money: {{ current_user.stocks_value + current_user.stock_points }} 💲</h4>
+        {% endif %}
+
         <!-- New Stock -->
         {% if current_user.is_authenticated %}
           <hr>
