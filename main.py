@@ -7,12 +7,11 @@ from werkzeug.exceptions import abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
+from sqlalchemy import exc
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user
 from forms import RegisterForm, LoginForm, StockForm
 from functools import wraps
 import os
-
-# Todo: show the money that is invested.
 
 
 STOCK_POINTS = 50000
@@ -44,7 +43,7 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(100), unique=True)
     stock_points = db.Column(db.Integer, nullable=False)
     number = db.Column(db.String(100), unique=True, nullable=False)
-    stocks_value = db.Column(db.Integer, nullable=False)
+    stocks_value = db.Column(db.Float, nullable=False)
 
     stocks = relationship("Stocks", back_populates="follower")
 
@@ -61,11 +60,11 @@ class Stocks(db.Model):
     stock_name = db.Column(db.String(100), nullable=False)
     company_name = db.Column(db.String(100), nullable=False)
     articles = db.Column(db.Text, nullable=False)
-    stock_price = db.Column(db.Integer, nullable=False)
-    stock_value = db.Column(db.Integer, nullable=False)
-    stock_units = db.Column(db.Integer, nullable=False)
+    stock_price = db.Column(db.Float, nullable=False)
+    stock_value = db.Column(db.Float, nullable=False)
+    stock_units = db.Column(db.Float, nullable=False)
     stock_diff = db.Column(db.Integer, nullable=False)
-    stock_units_value = db.Column(db.Integer, nullable=False)
+    stock_units_value = db.Column(db.Float, nullable=False)
     date = db.Column(db.String(250), nullable=False)
 
 
@@ -110,7 +109,6 @@ def logout_only(f):
 
 @app.route('/')
 def get_all_stocks():
-    # Todo: Add user balance in the main screen.
     if current_user.is_authenticated:
         if current_user.id == 1:
             stocks = Stocks.query.all()
@@ -153,7 +151,12 @@ def register():
             stocks_value=0
         )
         db.session.add(new_user)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except exc.IntegrityError:
+            flash("You already used this name/ phone number!")
+            return render_template("register.html", form=form, current_user=current_user)
+
         login_user(new_user)
         return redirect(url_for("get_all_stocks"))
 
@@ -205,51 +208,67 @@ def show_stock(stock_id):
                            articles_list=articles_list, current_user=current_user, profit_points=profit)
 
 
+process = False
+
+
 @app.route("/new-stock", methods=["GET", "POST"])
 @login_only
 def buy_new_stock():
-    # Todo: Add current balance.
+    global process
     form = StockForm()
     if form.validate_on_submit():
-        try:
-            stock_follower = set_follower(form.stock_name.data)
-            stock_follower.get_stock()
-        except KeyError:
-            flash('Invalid stock symbol!')
-            return redirect(url_for('buy_new_stock'))
+        if not process:
+            process = True
+            try:
+                stock_follower = set_follower(form.stock_name.data)
+                stock_follower.get_stock()
+            except KeyError:
+                flash('Invalid stock symbol!')
+                process = False
+                return redirect(url_for('buy_new_stock'))
 
-        stock_price = float(stock_follower.closing_price)
-        points_amount = float(form.points_amount.data)
-        stock_units = points_amount / stock_price
+            stock_price = float(stock_follower.closing_price)
+            points_amount = float(form.points_amount.data)
+            stock_units = points_amount / stock_price
 
-        if current_user.stock_points - points_amount < 0:
-            flash('You do not have enough money!')
-            return redirect(url_for('buy_new_stock'))
-        elif form.stock_name.data in [s.stock_name for s in Stocks.query.filter_by(follower_id=current_user.id).all()]:
-            flash('You already bought this stock!')
-            return redirect(url_for('buy_new_stock'))
+            if current_user.stock_points - points_amount < 0:
+                flash('You do not have enough money!')
+                process = False
+                return redirect(url_for('buy_new_stock'))
+            elif form.stock_name.data in [s.stock_name for s in Stocks.query.filter_by(follower_id=current_user.id).all()]:
+                flash('You already bought this stock!')
+                process = False
+                return redirect(url_for('buy_new_stock'))
 
-        stock_follower.get_stock_diff(stock_follower.closing_price)
-        stock_follower.get_articles()
+            stock_follower.get_stock_diff(stock_follower.closing_price)
+            try:
+                stock_follower.get_articles()
+            except KeyError:
+                flash('Invalid stock symbol!')
+                process = False
+                return redirect(url_for('buy_new_stock'))
 
-        new_stock = Stocks(
-            company_name=stock_follower.company_name,
-            stock_name=form.stock_name.data,
-            follower=current_user,
-            stock_price=stock_price,
-            stock_value=stock_price,
-            stock_units=stock_units,
-            stock_diff=stock_follower.diff_percent,
-            stock_units_value=stock_units*stock_price,
-            articles=stock_follower.message,
-            date=date.today().strftime("%B %d, %Y")
-        )
+            new_stock = Stocks(
+                company_name=stock_follower.company_name,
+                stock_name=form.stock_name.data,
+                follower=current_user,
+                stock_price=stock_price,
+                stock_value=stock_price,
+                stock_units=stock_units,
+                stock_diff=stock_follower.diff_percent,
+                stock_units_value=stock_units*stock_price,
+                articles=stock_follower.message,
+                date=date.today().strftime("%B %d, %Y")
+            )
 
-        current_user.stock_points = current_user.stock_points - points_amount
-        current_user.stocks_value = current_user.stocks_value + new_stock.stock_units_value
-        db.session.add(new_stock)
-        db.session.commit()
-        return redirect(url_for("get_all_stocks"))
+            current_user.stock_points = current_user.stock_points - points_amount
+            current_user.stocks_value = current_user.stocks_value + new_stock.stock_units_value
+            db.session.add(new_stock)
+            db.session.commit()
+            process = False
+            return redirect(url_for("get_all_stocks"))
+        else:
+            flash("Do not click the button more than one time!")
     return render_template("buy-stock.html", form=form, current_user=current_user)
 
 
