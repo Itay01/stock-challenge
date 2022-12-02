@@ -7,7 +7,9 @@ class RegisterForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired()])
     password = PasswordField("Password", validators=[DataRequired()])
     name = StringField("Name", validators=[DataRequired()])
-    number = StringField("Phone Number")
+    number = StringField("Phone Number", render_kw={'placeholder': 'Valid Format is 05xxxxxxxx'},
+                         validators=[DataRequired()],
+                         description='p tag')
     submit = SubmitField("Sign Me Up!")
 
 

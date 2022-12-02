@@ -43,7 +43,7 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(100))
     name = db.Column(db.String(100), unique=True)
     stock_points = db.Column(db.Integer, nullable=False)
-    number = db.Column(db.String(100), unique=True)
+    number = db.Column(db.String(100), unique=True, nullable=False)
     stocks_value = db.Column(db.Integer, nullable=False)
 
     stocks = relationship("Stocks", back_populates="follower")
@@ -127,34 +127,31 @@ def get_all_stocks():
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
-
         if User.query.filter_by(email=form.email.data).first():
             # User already exists
             flash("You've already signed up with that email, log in instead!")
             return redirect(url_for('login'))
+
+        number_data = form.number.data
+        if len(number_data) != 10 or number_data[0] != "0" or number_data[1] != '5':
+            flash("Invalid phone number format!")
+            return render_template("register.html", form=form, current_user=current_user)
 
         hash_and_salted_password = generate_password_hash(
             form.password.data,
             method='pbkdf2:sha256',
             salt_length=8
         )
-        if form.number.data == "":
-            new_user = User(
-                email=form.email.data,
-                password=hash_and_salted_password,
-                name=form.name.data,
-                stock_points=STOCK_POINTS,
-                stocks_value=0
-            )
-        else:
-            new_user = User(
-                email=form.email.data,
-                password=hash_and_salted_password,
-                name=form.name.data,
-                number=form.number.data,
-                stock_points=STOCK_POINTS,
-                stocks_value=0
-            )
+
+        number = number_data.replace("0", "+972", 1)
+        new_user = User(
+            email=form.email.data,
+            password=hash_and_salted_password,
+            name=form.name.data,
+            number=number,
+            stock_points=STOCK_POINTS,
+            stocks_value=0
+        )
         db.session.add(new_user)
         db.session.commit()
         login_user(new_user)
@@ -215,7 +212,7 @@ def buy_new_stock():
     form = StockForm()
     if form.validate_on_submit():
         try:
-            stock_follower = set_follower(form.stock_name.data, current_user.number)
+            stock_follower = set_follower(form.stock_name.data)
             stock_follower.get_stock()
         except KeyError:
             flash('Invalid stock symbol!')
@@ -271,8 +268,8 @@ def sell_stock(stock_id):
     return redirect(url_for("get_all_stocks"))
 
 
-def set_follower(stock_name, number):
-    stock_follower = StockFollower(stock_name, number)
+def set_follower(stock_name):
+    stock_follower = StockFollower(stock_name)
     return stock_follower
 
 

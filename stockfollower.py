@@ -1,3 +1,4 @@
+import time
 import requests
 import os
 from twilio.rest import Client
@@ -15,11 +16,10 @@ TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_TOKEN")
 
 
 class StockFollower:
-    def __init__(self, stock_name, number):
+    def __init__(self, stock_name):
         self.stock_name = stock_name
         self.up_down = None
         self.company_name = None
-        self.number = number
         self.message = None
         self.closing_price = None
         self.diff_percent = None
@@ -76,10 +76,10 @@ class StockFollower:
                 message += f"{info}\n"
         self.message = message
 
-    def send_messages(self):
-        if self.diff_percent > 1 and self.number != "":
+    def send_messages(self, number):
+        if self.diff_percent > 5 and number != "":
             send_message = f"{self.stock_name}: {self.up_down}{self.diff_percent}%\n"
-            for i in range(1, len(self.message)+1, 3):
+            for i in range(1, len(self.message) + 1, 3):
                 send_message += "\n".join(self.message[i:].split("\n")) + "\n"
 
             client = Client(TWILIO_SID, TWILIO_AUTH_TOKEN)
@@ -87,6 +87,6 @@ class StockFollower:
             message = client.messages.create(
                 body=send_message,
                 from_=f"whatsapp:{VIRTUAL_TWILIO_NUMBER}",
-                to=f"whatsapp:{self.number}"
+                status_callback='http://postb.in/1234abcd',
+                to=f"whatsapp:{number}"
             )
-
