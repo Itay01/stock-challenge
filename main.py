@@ -60,7 +60,7 @@ class Stocks(db.Model):
 
     stock_name = db.Column(db.String(100), nullable=False)
     company_name = db.Column(db.String(100), nullable=False)
-    articles = db.Column(db.String(250), nullable=False)
+    articles = db.Column(db.Text, nullable=False)
     stock_price = db.Column(db.Integer, nullable=False)
     stock_value = db.Column(db.Integer, nullable=False)
     stock_units = db.Column(db.Integer, nullable=False)
