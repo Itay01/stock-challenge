@@ -210,7 +210,6 @@ def show_stock(stock_id):
 
 process = False
 
-
 @app.route("/new-stock", methods=["GET", "POST"])
 @login_only
 def buy_new_stock():
@@ -269,6 +268,8 @@ def buy_new_stock():
             return redirect(url_for("get_all_stocks"))
         else:
             flash("Do not click the button more than one time!")
+            while process:
+                pass
     return render_template("buy-stock.html", form=form, current_user=current_user)
 
 
