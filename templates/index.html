@@ -18,21 +18,21 @@
 
   <head>
     <style>
-    table {
-      font-family: arial, sans-serif;
-      border-collapse: collapse;
-      width: 100%;
-    }
+      table {
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+      }
 
-    td, th {
-      border: 1px solid #dddddd;
-      text-align: left;
-      padding: 8px;
-    }
+      td, th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+      }
 
-    tr:nth-child(even) {
-      background-color: #dddddd;
-    }
+      tr:nth-child(even) {
+        background-color: #dddddd;
+      }
     </style>
   </head>
 
@@ -58,7 +58,7 @@
               </tr>
               {% for stock in all_stocks %}
                 <tr>
-                  <td><a href="{{ url_for('show_stock', stock_id=stock.id) }}">{{ stock.stock_name }}</a></td>
+                  <td><a style="color: #3366CC" href="{{ url_for('show_stock', stock_id=stock.id) }}">{{ stock.stock_name }}</a></td>
                   <td>
                     <script>document.write(Math.round(({{ stock.stock_units }} + Number.EPSILON) * 100) / 100);</script>
                   </td>
