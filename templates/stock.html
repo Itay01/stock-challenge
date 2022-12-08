@@ -26,10 +26,10 @@
       <div class="row">
         <div class="col-lg-8 col-md-10 mx-auto">
           <p>Units bought: <script>document.write(Math.round(({{ stock.stock_units }} + Number.EPSILON) * 100) / 100);</script></p>
-          <p>Buying Price: {{ stock.stock_price }} 💲</p>
-          <p>Current Price: {{ stock.stock_value }} 💲</p>
+          <p>Buying Price: {{ stock.stock_price }} ₪</p>
+          <p>Current Price: {{ stock.stock_value }} ₪</p>
           <p>Change (Percentage): {{ stock.stock_diff }} %</p>
-          <p>Profit: <script>document.write(Math.round(({{ profit_points }} + Number.EPSILON) * 100) / 100);</script> 💲</p>
+          <p>Profit: <script>document.write(Math.round(({{ profit_points }} + Number.EPSILON) * 100) / 100);</script> ₪</p>
           <div class="clearfix">
              <a class="btn btn-primary float-right" href="https://finance.yahoo.com/quote/{{ stock.stock_name }}.TA">More Details</a>
           </div>
