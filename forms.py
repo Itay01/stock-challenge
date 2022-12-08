@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField
+from wtforms import StringField, SubmitField, PasswordField, SelectField
 from wtforms.validators import DataRequired
 
 
@@ -19,7 +19,14 @@ class LoginForm(FlaskForm):
     submit = SubmitField("Let Me In!")
 
 
-class StockForm(FlaskForm):
+class BuyForm(FlaskForm):
     stock_name = StringField("Stock Symbol", validators=[DataRequired()])
-    points_amount = StringField("Purchase Value 💲", validators=[DataRequired()])
-    submit = SubmitField("Buy My Stock!")
+    buy_value = StringField("Purchase Value ₪", validators=[DataRequired()])
+    submit = SubmitField("Buy My Stock!", render_kw={"onclick": "loader()"})
+
+
+class SellForm(FlaskForm):
+    stocks_list = SelectField("Choose Stock:")
+    sell_value = StringField("Sell Value ₪", validators=[DataRequired()])
+    submit = SubmitField("Sell My stock!", render_kw={"onclick": "loader()"})
+

@@ -9,12 +9,11 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from sqlalchemy import exc
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user
-from forms import RegisterForm, LoginForm, StockForm
+from forms import RegisterForm, LoginForm, BuyForm, SellForm
 from functools import wraps
 import os
 
-
-STOCK_POINTS = 50000
+STOCK_POINTS = 15000
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('APP_KEY')
@@ -80,6 +79,7 @@ def admin_only(f):
         except AttributeError:
             return abort(403)
         return f(*args, **kwargs)
+
     return decorated_function
 
 
@@ -92,6 +92,7 @@ def login_only(f):
         except AttributeError:
             return abort(403)
         return f(*args, **kwargs)
+
     return decorated_function
 
 
@@ -104,6 +105,7 @@ def logout_only(f):
         except AttributeError:
             return abort(403)
         return f(*args, **kwargs)
+
     return decorated_function
 
 
@@ -116,7 +118,6 @@ def get_all_stocks():
             stocks = Stocks.query.filter_by(follower_id=current_user.id).all()
     else:
         stocks = []
-
     return render_template("index.html", all_stocks=stocks, current_user=current_user)
 
 
@@ -201,91 +202,97 @@ def show_stock(stock_id):
         return redirect(url_for('get_all_stocks'))
 
     articles_list = requested_stock.articles.split("\n")[:-1]
-    len_list = len(articles_list[1:])+1
+    len_list = len(articles_list[1:]) + 1
     profit = requested_stock.stock_units * (requested_stock.stock_value - requested_stock.stock_price)
 
     return render_template("stock.html", stock=requested_stock, len_list=len_list,
                            articles_list=articles_list, current_user=current_user, profit_points=profit)
 
 
-process = False
-
 @app.route("/new-stock", methods=["GET", "POST"])
 @login_only
 def buy_new_stock():
-    global process
-    form = StockForm()
+    form = BuyForm()
     if form.validate_on_submit():
-        if not process:
-            process = True
-            try:
-                stock_follower = set_follower(form.stock_name.data)
-                stock_follower.get_stock()
-            except KeyError:
-                flash('Invalid stock symbol!')
-                process = False
-                return redirect(url_for('buy_new_stock'))
+        stock_name = f"{form.stock_name.data}".upper()
+        try:
+            stock_follower = set_follower(stock_name)
+            stock_follower.get_stock()
+        except IndexError:
+            flash('Invalid stock symbol!')
+            return redirect(url_for('buy_new_stock'))
 
-            stock_price = float(stock_follower.closing_price)
-            points_amount = float(form.points_amount.data)
-            stock_units = points_amount / stock_price
+        stock_price = float(stock_follower.closing_price)
+        buy_value = float(form.buy_value.data)
+        stock_units = buy_value / stock_price
 
-            if current_user.stock_points - points_amount < 0:
-                flash('You do not have enough money!')
-                process = False
-                return redirect(url_for('buy_new_stock'))
-            elif form.stock_name.data in [s.stock_name for s in Stocks.query.filter_by(follower_id=current_user.id).all()]:
-                flash('You already bought this stock!')
-                process = False
-                return redirect(url_for('buy_new_stock'))
+        if current_user.stock_points - buy_value < 0:
+            flash('You do not have enough money!')
+            return redirect(url_for('buy_new_stock'))
+        elif stock_name in [s.stock_name for s in Stocks.query.filter_by(follower_id=current_user.id).all()]:
+            flash('You already bought this stock!')
+            return redirect(url_for('buy_new_stock'))
 
-            stock_follower.get_stock_diff(stock_follower.closing_price)
-            try:
-                stock_follower.get_articles()
-            except KeyError:
-                flash('Invalid stock symbol!')
-                process = False
-                return redirect(url_for('buy_new_stock'))
+        stock_follower.get_stock_diff(stock_follower.closing_price)
+        try:
+            stock_follower.get_articles()
+        except KeyError:
+            flash('Invalid stock symbol!')
+            return redirect(url_for('buy_new_stock'))
 
-            new_stock = Stocks(
-                company_name=stock_follower.company_name,
-                stock_name=form.stock_name.data,
-                follower=current_user,
-                stock_price=stock_price,
-                stock_value=stock_price,
-                stock_units=stock_units,
-                stock_diff=stock_follower.diff_percent,
-                stock_units_value=stock_units*stock_price,
-                articles=stock_follower.message,
-                date=date.today().strftime("%B %d, %Y")
-            )
+        new_stock = Stocks(
+            company_name=stock_follower.company_name,
+            stock_name=stock_name,
+            follower=current_user,
+            stock_price=stock_price,
+            stock_value=stock_price,
+            stock_units=stock_units,
+            stock_diff=stock_follower.diff_percent,
+            stock_units_value=stock_units * stock_price,
+            articles=stock_follower.message,
+            date=date.today().strftime("%B %d, %Y")
+        )
 
-            current_user.stock_points = current_user.stock_points - points_amount
-            current_user.stocks_value = current_user.stocks_value + new_stock.stock_units_value
-            db.session.add(new_stock)
-            db.session.commit()
-            process = False
-            return redirect(url_for("get_all_stocks"))
-        else:
-            flash("Do not click the button more than one time!")
-            while process:
-                pass
-    return render_template("buy-stock.html", form=form, current_user=current_user)
-
-
-@app.route("/sell-stock/<int:stock_id>", methods=["GET", "POST"])
-@login_only
-def sell_stock(stock_id):
-    stock_to_sell = Stocks.query.get(stock_id)
-    if current_user.id != stock_to_sell.follower_id and current_user.id != 1:
+        current_user.stock_points = current_user.stock_points - buy_value
+        current_user.stocks_value = current_user.stocks_value + new_stock.stock_units_value
+        db.session.add(new_stock)
+        db.session.commit()
         return redirect(url_for("get_all_stocks"))
+    return render_template("buy-modal.html", form=form)
 
-    total_value = stock_to_sell.stock_units * stock_to_sell.stock_value
-    current_user.stock_points = current_user.stock_points + total_value
-    current_user.stocks_value = current_user.stocks_value - total_value
-    db.session.delete(stock_to_sell)
-    db.session.commit()
-    return redirect(url_for("get_all_stocks"))
+
+@app.route("/sell-stock", methods=["GET", "POST"])
+@login_only
+def sell_stock():
+    form = SellForm()
+
+    user_stocks = Stocks.query.filter_by(follower_id=current_user.id).all()
+    stocks = [stock.company_name for stock in user_stocks]
+    form.stocks_list.choices = [(str(i+1), stocks[i]) for i in range(len(stocks))]
+
+    if form.validate_on_submit():
+        user_choice = form.stocks_list.data
+        stock_to_sell = user_stocks[int(user_choice) - 1]
+
+        stock_units_value = stock_to_sell.stock_units_value
+        sell_value = float(form.sell_value.data)
+        if stock_units_value < sell_value:
+            flash(f"Your stock is worth only {round(stock_units_value, 2)}!")
+            return redirect(url_for('sell_stock'))
+        else:
+            current_user.stock_points = current_user.stock_points + sell_value
+            current_user.stocks_value = current_user.stocks_value - sell_value
+
+            if round(stock_units_value, 2) == sell_value:
+                db.session.delete(stock_to_sell)
+            else:
+                units_left = (stock_units_value - sell_value) / stock_to_sell.stock_value
+                stock_to_sell.units = units_left
+                stock_to_sell.stock_units_value = units_left * stock_to_sell.stock_value
+
+            db.session.commit()
+        return redirect(url_for("get_all_stocks"))
+    return render_template("sell-modal.html", form=form, stocks=stocks)
 
 
 def set_follower(stock_name):

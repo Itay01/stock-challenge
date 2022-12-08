@@ -24,18 +24,9 @@ class StockFollower:
         self.diff_percent = None
 
     def get_stock(self):
-        stock_params = {
-            "function": "TIME_SERIES_DAILY_ADJUSTED",
-            "symbol": self.stock_name,
-            "apikey": STOCK_API_KEY,
-        }
-
-        response = requests.get(STOCK_ENDPOINT, params=stock_params)
-        data = response.json()["Time Series (Daily)"]
-        data_list = [value for (key, value) in data.items()]
-        yesterday_data = data_list[0]
-        yesterday_closing_price = yesterday_data["4. close"]
-        self.closing_price = yesterday_closing_price
+        stock_last_day = yf.Ticker(f"{self.stock_name}.TA").history(period='1d')
+        close_price = stock_last_day['Close'][0]
+        self.closing_price = close_price
 
     def get_stock_diff(self, buying_price):
         difference = float(self.closing_price) - float(buying_price)
@@ -46,27 +37,18 @@ class StockFollower:
             up_down = "🔻"
 
         diff_percent = abs(round((difference / float(buying_price)) * 100))
-        # print(diff_percent)
         self.diff_percent = diff_percent
         self.up_down = up_down
 
     def get_articles(self):
-        self.company_name = yf.Ticker(self.stock_name).info['longName']
-        news_params = {
-            "apiKey": NEWS_API_KEY,
-            "qInTitle": self.company_name
-        }
+        self.message = "test"
+        ticker = yf.Ticker(f"{self.stock_name}.TA")
+        self.company_name = ticker.info['longName']
 
-        news_response = requests.get(NEWS_ENDPOINT, params=news_params)
-        articles = news_response.json()["articles"]
-        three_articles = articles[:3]
-        # print(three_articles)
-
-        # up_down_message = f"{self.stock_name}: {self.up_down}{self.diff_percent}%"
+        return None
         up_down_message = f"{self.up_down}{self.diff_percent}%"
         formatted_articles = [f"Headline: {article['title']}. \n"
                               f"Brief: {article['description']}\n{article['url']}" for article in three_articles]
-        # print(formatted_articles)
 
         message = f"{up_down_message}\n"
         for article in formatted_articles:
@@ -86,6 +68,5 @@ class StockFollower:
             message = client.messages.create(
                 body=send_message,
                 from_=f"whatsapp:{VIRTUAL_TWILIO_NUMBER}",
-                status_callback='http://postb.in/1234abcd',
                 to=f"whatsapp:{number}"
             )
