@@ -46,7 +46,7 @@
       <div class="col-lg-8 col-md-10 mx-auto">
         <div class="post-preview">
             {% if current_user.is_authenticated %}
-              <h4>Current Balance: <script>document.write(Math.round(({{ current_user.stock_points }} + Number.EPSILON) * 100) / 100);</script> ₪</h4>
+              <h4>Cash Balance: <script>document.write(Math.round(({{ current_user.stock_points }} + Number.EPSILON) * 100) / 100);</script> ₪</h4>
               <hr>
             {% endif %}
 
@@ -54,24 +54,18 @@
             <table>
               <tr>
                 <th>Stock Symbol</th>
-                <th>Units</th>
-                <th>Buying Price</th>
-                <th>Current Price</th>
-                <th>Change</th>
+                <th>Company Name</th>
                 <th>Current Value</th>
+                <th>Change</th>
               </tr>
               {% for stock in all_stocks %}
                 <tr>
                   <td><a style="color: #3366CC" href="{{ url_for('show_stock', stock_id=stock.id) }}">{{ stock.stock_name }}</a></td>
-                  <td>
-                    <script>document.write(Math.round(({{ stock.stock_units }} + Number.EPSILON) * 100) / 100);</script>
-                  </td>
-                  <td>{{ stock.stock_price }} ₪</td>
-                  <td>{{ stock.stock_value }} ₪</td>
-                  <td>{{ stock.stock_diff }} %</td>
+                  <td>{{ stock.company_name }}</td>
                   <td>
                     <script>document.write(Math.round(({{ stock.stock_units_value }} + Number.EPSILON) * 100) / 100);</script>
                      ₪</td>
+                  <td>{{ stock.stock_diff }} %</td>
                 </tr>
               {% endfor %}
             </table>
@@ -90,7 +84,15 @@
           <hr>
           <div class="clearfix">
             <a class="btn btn-primary float-right" href="{{ url_for('buy_new_stock') }}">Buy New Stock</a>
-            <a class="btn btn-danger float-left" href="{{ url_for('sell_stock') }}">Sell My Stock</a>
+            <a id="sell-button" class="btn btn-danger float-left" href="{{ url_for('sell_stock') }}">Sell My Stock</a>
+            <script>
+            let isMobile = window.navigator.userAgentData.mobile;
+              if (isMobile) {
+                var element = document.getElementById("sell-button");
+                element.classList.add("float-right");
+                element.classList.remove("float-left");
+              }
+            </script>
           </div>
         {% endif %}
 

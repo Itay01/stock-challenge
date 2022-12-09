@@ -28,21 +28,13 @@
           <p>Units bought: <script>document.write(Math.round(({{ stock.stock_units }} + Number.EPSILON) * 100) / 100);</script></p>
           <p>Buying Price: {{ stock.stock_price }} ₪</p>
           <p>Current Price: {{ stock.stock_value }} ₪</p>
+          <p>Days Owned: {{ diff_days }}</p>
           <p>Change (Percentage): {{ stock.stock_diff }} %</p>
           <p>Profit: <script>document.write(Math.round(({{ profit_points }} + Number.EPSILON) * 100) / 100);</script> ₪</p>
           <div class="clearfix">
-             <a class="btn btn-primary float-right" href="https://finance.yahoo.com/quote/{{ stock.stock_name }}.TA">More Details</a>
+             <a class="btn btn-primary float-right" href="https://finance.yahoo.com/quote/{{ stock.stock_name }}.TA" target="_blank">More Details</a>
           </div>
           <hr>
-          {% for i in range(1, len_list, 3) %}
-            {{ articles_list[i]|safe }}
-            <br>
-            {{ articles_list[i+1]|safe }}
-            <br>
-            <br>
-            <a style="color: #3366CC" href="{{ articles_list[i+2]|safe }}">read more</a>
-            <hr>
-          {% endfor %}
         </div>
       </div>
     </div>

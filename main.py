@@ -12,6 +12,7 @@ from flask_login import UserMixin, login_user, LoginManager, current_user, logou
 from forms import RegisterForm, LoginForm, BuyForm, SellForm
 from functools import wraps
 import os
+from datetime import datetime
 
 STOCK_POINTS = 15000
 
@@ -201,12 +202,13 @@ def show_stock(stock_id):
     if requested_stock.follower_id != current_user.id and current_user.id != 1:
         return redirect(url_for('get_all_stocks'))
 
-    articles_list = requested_stock.articles.split("\n")[:-1]
-    len_list = len(articles_list[1:]) + 1
+    date_now = datetime.now()
+    buying_date = datetime.strptime(requested_stock.date, "%B %d, %Y")
+    diff_days = (date_now - buying_date).days
+
     profit = requested_stock.stock_units * (requested_stock.stock_value - requested_stock.stock_price)
 
-    return render_template("stock.html", stock=requested_stock, len_list=len_list,
-                           articles_list=articles_list, current_user=current_user, profit_points=profit)
+    return render_template("stock.html", stock=requested_stock, current_user=current_user, profit_points=profit, diff_days=diff_days)
 
 
 @app.route("/new-stock", methods=["GET", "POST"])
@@ -228,9 +230,6 @@ def buy_new_stock():
 
         if current_user.stock_points - buy_value < 0:
             flash('You do not have enough money!')
-            return redirect(url_for('buy_new_stock'))
-        elif stock_name in [s.stock_name for s in Stocks.query.filter_by(follower_id=current_user.id).all()]:
-            flash('You already bought this stock!')
             return redirect(url_for('buy_new_stock'))
 
         stock_follower.get_stock_diff(stock_follower.closing_price)
@@ -268,7 +267,7 @@ def sell_stock():
 
     user_stocks = Stocks.query.filter_by(follower_id=current_user.id).all()
     stocks = [stock.company_name for stock in user_stocks]
-    form.stocks_list.choices = [(str(i+1), stocks[i]) for i in range(len(stocks))]
+    form.stocks_list.choices = [(str(i + 1), stocks[i]) for i in range(len(stocks))]
 
     if form.validate_on_submit():
         user_choice = form.stocks_list.data
