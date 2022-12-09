@@ -208,7 +208,8 @@ def show_stock(stock_id):
 
     profit = requested_stock.stock_units * (requested_stock.stock_value - requested_stock.stock_price)
 
-    return render_template("stock.html", stock=requested_stock, current_user=current_user, profit_points=profit, diff_days=diff_days)
+    return render_template("stock.html", stock=requested_stock, current_user=current_user, profit_points=profit,
+                           diff_days=diff_days)
 
 
 @app.route("/new-stock", methods=["GET", "POST"])
@@ -230,6 +231,9 @@ def buy_new_stock():
 
         if current_user.stock_points - buy_value < 0:
             flash('You do not have enough money!')
+            return redirect(url_for('buy_new_stock'))
+        elif stock_name in [s.stock_name for s in Stocks.query.filter_by(follower_id=current_user.id).all()]:
+            flash('You already bought this stock!')
             return redirect(url_for('buy_new_stock'))
 
         stock_follower.get_stock_diff(stock_follower.closing_price)
