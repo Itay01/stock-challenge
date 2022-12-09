@@ -83,14 +83,18 @@
         {% if current_user.is_authenticated %}
           <hr>
           <div class="clearfix">
-            <a class="btn btn-primary float-right" href="{{ url_for('buy_new_stock') }}">Buy New Stock</a>
+            <a id="buy-button" class="btn btn-primary float-right" href="{{ url_for('buy_new_stock') }}">Buy New Stock</a>
             <a id="sell-button" class="btn btn-danger float-left" href="{{ url_for('sell_stock') }}">Sell My Stock</a>
             <script>
             let isMobile = window.navigator.userAgentData.mobile;
               if (isMobile) {
-                var element = document.getElementById("sell-button");
-                element.classList.add("mx-auto d-block");
-                element.classList.remove("float-left");
+                var buy_btn = document.getElementById("buy-button");
+                buy_btn.classList.add("text-center");
+                buy_btn.classList.remove("float-right");
+
+                var sell_btn = document.getElementById(sell-button");
+                sell_btn.classList.add("text-center");
+                sell_btn.classList.remove("float-left");
               }
             </script>
           </div>
