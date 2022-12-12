@@ -34,6 +34,10 @@
       tr:nth-child(even) {
         background-color: #dddddd;
       }
+
+      p a {
+        text-decoration: none;
+      }
     </style>
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
@@ -55,6 +59,7 @@
               <tr>
                 <th>Stock Symbol</th>
                 <th>Company Name</th>
+                <th>stock price</th>
                 <th>Current Value</th>
                 <th>Change</th>
               </tr>
@@ -62,6 +67,7 @@
                 <tr>
                   <td><a style="color: #3366CC" href="{{ url_for('show_stock', stock_id=stock.id) }}">{{ stock.stock_name }}</a></td>
                   <td>{{ stock.company_name }}</td>
+                  <td><script>document.write(Math.round(({{ stock.stock_value }} + Number.EPSILON) * 100) / 100);</script> ₪</td>
                   <td>
                     <script>document.write(Math.round(({{ stock.stock_units_value }} + Number.EPSILON) * 100) / 100);</script>
                      ₪</td>
@@ -82,18 +88,19 @@
         <!-- New Stock -->
         {% if current_user.is_authenticated %}
           <hr>
-          <div class="clearfix">
-            <a id="buy-button" class="btn btn-primary float-right" href="{{ url_for('buy_new_stock') }}">Buy New Stock</a>
-            <a id="sell-button" class="btn btn-danger float-left" href="{{ url_for('sell_stock') }}">Sell My Stock</a>
+          <div id="btn-align" class="clearfix">
+            <p><a id="buy-button" class="btn btn-primary float-right" href="{{ url_for('buy_new_stock') }}">Buy New Stock</a></p>
+            <p><a id="sell-button" class="btn btn-danger float-left" href="{{ url_for('sell_stock') }}">Sell My Stock</a></p>
             <script>
-            let isMobile = window.navigator.userAgentData.mobile;
+              let isMobile = window.navigator.userAgentData.mobile;
               if (isMobile) {
-                var butBtn = document.getElementById("buy-button");
-                butBtn.classList.add("text-center");
-                butBtn.classList.remove("float-right");
+                var div = document.getElementById("btn-align");
+                div.classList.add("col", "text-center");
 
+                var buyBtn = document.getElementById("buy-button");
                 var sellBtn = document.getElementById("sell-button");
-                sellBtn.classList.add("text-center");
+
+                buyBtn.classList.remove("float-right");
                 sellBtn.classList.remove("float-left");
               }
             </script>
