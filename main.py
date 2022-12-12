@@ -232,9 +232,6 @@ def buy_new_stock():
         if current_user.stock_points - buy_value < 0:
             flash('You do not have enough money!')
             return redirect(url_for('buy_new_stock'))
-        elif stock_name in [s.stock_name for s in Stocks.query.filter_by(follower_id=current_user.id).all()]:
-            flash('You already bought this stock!')
-            return redirect(url_for('buy_new_stock'))
 
         stock_follower.get_stock_diff(stock_follower.closing_price)
         try:
@@ -270,8 +267,8 @@ def sell_stock():
     form = SellForm()
 
     user_stocks = Stocks.query.filter_by(follower_id=current_user.id).all()
-    stocks = [stock.company_name for stock in user_stocks]
-    form.stocks_list.choices = [(str(i + 1), stocks[i]) for i in range(len(stocks))]
+    stocks = [(stock.company_name, stock.stock_units_value, 2) for stock in user_stocks]
+    form.stocks_list.choices = [(str(i + 1), f"{stocks[i][0]} ({stocks[i][1]}₪)") for i in range(len(stocks))]
 
     if form.validate_on_submit():
         user_choice = form.stocks_list.data
