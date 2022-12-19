@@ -1,7 +1,6 @@
 from stockfollower import StockFollower
 from flask import Flask, render_template, redirect, url_for, flash
 from flask_bootstrap import Bootstrap
-from flask_ckeditor import CKEditor
 from datetime import date
 from werkzeug.exceptions import abort
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -13,18 +12,21 @@ from forms import RegisterForm, LoginForm, BuyForm, SellForm
 from functools import wraps
 import os
 from datetime import datetime
+from stockmessages import StockMessage
+
 
 STOCK_POINTS = 15000
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('APP_KEY')
-ckeditor = CKEditor(app)
 Bootstrap(app)
 
 # CONNECT TO DB
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///stock.db")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+messages = StockMessage()
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -59,13 +61,19 @@ class Stocks(db.Model):
 
     stock_name = db.Column(db.String(100), nullable=False)
     company_name = db.Column(db.String(100), nullable=False)
-    articles = db.Column(db.Text, nullable=False)
     stock_price = db.Column(db.Float, nullable=False)
     stock_value = db.Column(db.Float, nullable=False)
     stock_units = db.Column(db.Float, nullable=False)
-    stock_diff = db.Column(db.Integer, nullable=False)
+    stock_diff = db.Column(db.String(100), nullable=False)
     stock_units_value = db.Column(db.Float, nullable=False)
     date = db.Column(db.String(250), nullable=False)
+
+
+class StocksTable(db.Model):
+    __tablename__ = "stocks_table"
+    id = db.Column(db.Integer, primary_key=True)
+    company_name = db.Column(db.String(100), unique=True, nullable=False)
+    stock_symbol = db.Column(db.String(100), unique=True, nullable=False)
 
 
 db.create_all()
@@ -119,6 +127,8 @@ def get_all_stocks():
             stocks = Stocks.query.filter_by(follower_id=current_user.id).all()
     else:
         stocks = []
+
+    form = BuyForm()
     return render_template("index.html", all_stocks=stocks, current_user=current_user)
 
 
@@ -133,8 +143,12 @@ def register():
             return redirect(url_for('login'))
 
         number_data = form.number.data
+        number = number_data.replace("0", "+972", 1)
         if len(number_data) != 10 or number_data[0] != "0" or number_data[1] != '5':
             flash("Invalid phone number format!")
+            return render_template("register.html", form=form, current_user=current_user)
+        elif messages.check_number(number) is False:
+            flash("Please verify your phone number!")
             return render_template("register.html", form=form, current_user=current_user)
 
         hash_and_salted_password = generate_password_hash(
@@ -143,7 +157,6 @@ def register():
             salt_length=8
         )
 
-        number = number_data.replace("0", "+972", 1)
         new_user = User(
             email=form.email.data,
             password=hash_and_salted_password,
@@ -216,10 +229,14 @@ def show_stock(stock_id):
 @login_only
 def buy_new_stock():
     form = BuyForm()
+    all_stocks = StocksTable.query.all()
+    possible_stocks = {i: all_stocks[i].company_name for i in range(len(all_stocks))}
+    form.stock_name.choices = [("", "")] + [(uuid, name) for uuid, name in possible_stocks.items()]
     if form.validate_on_submit():
-        stock_name = f"{form.stock_name.data}".upper()
+        stock_symbol = StocksTable.query.filter_by(company_name=possible_stocks[int(form.stock_name.data)]).first()
+        stock_symbol = stock_symbol.stock_symbol
         try:
-            stock_follower = set_follower(stock_name)
+            stock_follower = StockFollower(stock_symbol)
             stock_follower.get_stock()
         except IndexError:
             flash('Invalid stock symbol!')
@@ -234,22 +251,16 @@ def buy_new_stock():
             return redirect(url_for('buy_new_stock'))
 
         stock_follower.get_stock_diff(stock_follower.closing_price)
-        try:
-            stock_follower.get_articles()
-        except KeyError:
-            flash('Invalid stock symbol!')
-            return redirect(url_for('buy_new_stock'))
 
         new_stock = Stocks(
             company_name=stock_follower.company_name,
-            stock_name=stock_name,
+            stock_name=stock_symbol,
             follower=current_user,
             stock_price=stock_price,
             stock_value=stock_price,
             stock_units=stock_units,
             stock_diff=stock_follower.diff_percent,
             stock_units_value=stock_units * stock_price,
-            articles=stock_follower.message,
             date=date.today().strftime("%B %d, %Y")
         )
 
@@ -267,7 +278,7 @@ def sell_stock():
     form = SellForm()
 
     user_stocks = Stocks.query.filter_by(follower_id=current_user.id).all()
-    stocks = [(stock.company_name, stock.stock_units_value, 2) for stock in user_stocks]
+    stocks = [(stock.company_name, round(stock.stock_units_value, 2)) for stock in user_stocks]
     form.stocks_list.choices = [(str(i + 1), f"{stocks[i][0]} ({stocks[i][1]}₪)") for i in range(len(stocks))]
 
     if form.validate_on_submit():
@@ -293,11 +304,6 @@ def sell_stock():
             db.session.commit()
         return redirect(url_for("get_all_stocks"))
     return render_template("sell-modal.html", form=form, stocks=stocks)
-
-
-def set_follower(stock_name):
-    stock_follower = StockFollower(stock_name)
-    return stock_follower
 
 
 if __name__ == "__main__":

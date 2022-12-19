@@ -51,7 +51,32 @@
   #buy-form {
     display: block;
   }
+
+  .select2-container {
+    width: 100% !important;
+  }
+
+  .select2-selection__rendered {
+    line-height: calc(1.5em + 0.75rem + 2px) !important;
+  }
+
+  .select2-container .select2-selection--single {
+    height: calc(1.5em + 0.75rem + 2px) !important;
+  }
+
+  .select2-selection__arrow {
+    height: calc(1.5em + 0.75rem + 2px) !important;
+  }
+
+  .select2-selection__clear {
+    height: calc(1.5em + 0.75rem + 2px) !important;
+  }
+
+  .select2-selection__placeholder {
+    line-height: calc(1.5em + 0.75rem + 2px) !important;
+  }
 </style>
+
 
 <div class="modal" id="buyModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
   <div class="modal-dialog" role="document">
@@ -77,6 +102,7 @@
           <div id="loader" style="display:none;"></div>
 
           <div id="buy-form" class="animate-bottom">
+            {{ form.hidden_tag() }}
             {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary"}) }}
           </div>
 
@@ -89,13 +115,20 @@
 
 {% block script %}
 <script>
-$(document).ready(function(){
-  $("#buyModal").modal("show")
-})
+  $(document).ready(function(){
+    $("#buyModal").modal("show")
 
-function loader() {
-  document.getElementById("loader").style.display = "block";
-  document.getElementById("buy-form").style.display = "none";
-}
+    $('#stock_name').select2({
+          theme: "classic",
+          placeholder: "{{ form.stock_name.label.text }}",
+          allowClear: true,
+          "width": "style"
+      });
+  })
+
+  function loader() {
+    document.getElementById("loader").style.display = "block";
+    document.getElementById("buy-form").style.display = "none";
+  }
 </script>
 {% endblock %}

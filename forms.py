@@ -1,6 +1,6 @@
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, Form
 from wtforms import StringField, SubmitField, PasswordField, SelectField
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, InputRequired
 
 
 class RegisterForm(FlaskForm):
@@ -20,13 +20,15 @@ class LoginForm(FlaskForm):
 
 
 class BuyForm(FlaskForm):
-    stock_name = StringField("Stock Symbol", validators=[DataRequired()])
+    # stock_name = StringField("Stock Symbol", validators=[DataRequired()])
+    stock_name = SelectField("Stock Name:", validators=[InputRequired()])
     buy_value = StringField("Purchase Value ₪", validators=[DataRequired()])
     submit = SubmitField("Buy My Stock!", render_kw={"onclick": "loader()"})
 
 
 class SellForm(FlaskForm):
-    stocks_list = SelectField("Choose Stock:")
+    stocks_list = SelectField("Enter a Stock", validators=[InputRequired()])
     sell_value = StringField("Sell Value ₪", validators=[DataRequired()])
     submit = SubmitField("Sell My stock!", render_kw={"onclick": "loader()"})
+
 

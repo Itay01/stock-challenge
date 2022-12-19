@@ -76,6 +76,7 @@
           <div id="loader" style="display:none;"></div>
 
           <div id="sell-form" class="animate-bottom">
+            {{ form.hidden_tag() }}
             {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary"}) }}
             <script>
                 var element = document.getElementById("submit");

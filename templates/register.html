@@ -32,9 +32,10 @@
           {% endwith %}
         </div>
 
+        {{ form.hidden_tag() }}
         {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary"}) }}
         <script>const array = document.querySelectorAll("p.help-block");
-        array[array.length -1].innerHTML = "Verify <a href='https://api.whatsapp.com/send/?phone=%2B14155238886&text=join+said-leave&type=phone_number&app_absent=0'>here</a> for WhatsApp updates!"
+        array[array.length -1].innerHTML = "Verify <a href='https://api.whatsapp.com/send/?phone=%2B14155238886&text=join+said-leave&type=phone_number&app_absent=0' target='_blank'>here</a> for WhatsApp updates!"
         </script>
 
       </div>
