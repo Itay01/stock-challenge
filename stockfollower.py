@@ -9,19 +9,20 @@ class StockFollower:
         self.closing_price = None
         self.diff_percent = None
         self.ticker = None
-        self.close_price = None
+        self.current_price = None
 
     def get_stock(self):
         self.ticker = yf.Ticker(f"{self.stock_name}.TA")
-        stock_last_day = self.ticker.history(period='2d')
-        self.closing_price = stock_last_day['Close'][0]
+        self.current_price = self.ticker.info["regularMarketPrice"]
+
+    def get_company_name(self):
         try:
             self.company_name = self.ticker.info['longName']
         except KeyError:
             self.company_name = self.stock_name
 
     def get_stock_diff(self, buying_price):
-        difference = float(self.closing_price) - float(buying_price)
+        difference = float(self.current_price) - float(buying_price)
         if difference > 0:
             self.up_down = "🔺"
         else:

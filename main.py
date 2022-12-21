@@ -9,17 +9,22 @@ from sqlalchemy.orm import relationship
 from sqlalchemy import exc
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user
 from forms import RegisterForm, LoginForm, BuyForm, SellForm
+from flask_apscheduler import APScheduler
 from functools import wraps
 import os
 from datetime import datetime
 from stockmessages import StockMessage
-
+from updatedatabase import update_user_stocks, check_diff
 
 STOCK_POINTS = 15000
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('APP_KEY')
 Bootstrap(app)
+
+scheduler = APScheduler()
+scheduler.init_app(app)
+scheduler.start()
 
 # CONNECT TO DB
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
@@ -121,6 +126,7 @@ def logout_only(f):
 @app.route('/')
 def get_all_stocks():
     if current_user.is_authenticated:
+        update_user_stocks(current_user.id)
         if current_user.id == 1:
             stocks = Stocks.query.all()
         else:
@@ -128,7 +134,6 @@ def get_all_stocks():
     else:
         stocks = []
 
-    form = BuyForm()
     return render_template("index.html", all_stocks=stocks, current_user=current_user)
 
 
@@ -242,7 +247,7 @@ def buy_new_stock():
             flash('Invalid stock symbol!')
             return redirect(url_for('buy_new_stock'))
 
-        stock_price = float(stock_follower.closing_price)
+        stock_price = float(stock_follower.current_price)
         buy_value = float(form.buy_value.data)
         stock_units = buy_value / stock_price
 
@@ -250,7 +255,8 @@ def buy_new_stock():
             flash('You do not have enough money!')
             return redirect(url_for('buy_new_stock'))
 
-        stock_follower.get_stock_diff(stock_follower.closing_price)
+        stock_follower.get_company_name()
+        stock_follower.get_stock_diff(stock_follower.current_price)
 
         new_stock = Stocks(
             company_name=stock_follower.company_name,
@@ -304,6 +310,12 @@ def sell_stock():
             db.session.commit()
         return redirect(url_for("get_all_stocks"))
     return render_template("sell-modal.html", form=form, stocks=stocks)
+
+
+@scheduler.task("interval", hours=24)
+def message_user():
+    check_diff()
+    print("Database updated successfully!")
 
 
 if __name__ == "__main__":

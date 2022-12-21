@@ -1,4 +1,3 @@
-{% import "bootstrap/wtf.html" as wtf %}
 {% extends 'index.html' %}
 
 {% block modal %}
@@ -48,9 +47,6 @@
     to{ bottom:0; opacity:1 }
   }
 
-  #buy-form {
-    display: block;
-  }
 </style>
 
 <div class="modal" id="sellModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
@@ -94,13 +90,13 @@
 
 {% block script %}
 <script>
-$(document).ready(function(){
-  $("#sellModal").modal("show")
-})
+  $(document).ready(function(){
+    $("#sellModal").modal("show")
+  })
 
-function loader() {
-  document.getElementById("loader").style.display = "block";
-  document.getElementById("sell-form").style.display = "none";
-}
+  function loader() {
+    document.getElementById("loader").style.display = "block";
+    document.getElementById("sell-form").style.display = "none";
+  }
 </script>
 {% endblock %}
