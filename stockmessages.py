@@ -11,6 +11,7 @@ class StockMessage:
         self.client = Client(TWILIO_SID, TWILIO_AUTH_TOKEN)
 
     def check_number(self, number):
+        """Return True if the user verified his phone number, and False if he did not."""
         verified_numbers = []
         for msgs in self.client.messages.list():
             if "join" in msgs.body and msgs.from_ not in verified_numbers:
@@ -21,7 +22,9 @@ class StockMessage:
         return False
 
     def send_message(self, number, send_message, diff_percent="0"):
-        if float(diff_percent[1:-1]) > 5 and number != "":
+        """Send message to the user in case the difference between the buying price and the current value,
+        is bigger than 5%. """
+        if float(diff_percent[1:-1]) > 5:
             message = self.client.messages.create(
                 body=send_message,
                 from_=f"whatsapp:{VIRTUAL_TWILIO_NUMBER}",

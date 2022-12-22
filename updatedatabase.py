@@ -58,6 +58,7 @@ db.create_all()
 
 
 def update_stocks_table():
+    """Update all the stocks that are in the stock market."""
     url = 'blob:https://www.tase.co.il/6ad9aeea-2511-4710-87e9-7a32bd135ff4'
     df = pd.read_csv('securitiesmarketdata.csv')
 
@@ -73,8 +74,10 @@ def update_stocks_table():
 
 
 def update_user_stocks(user_id):
+    """Update the user stocks, and values. Send notification message if needed."""
     # st = time.time()
     messages = StockMessage()
+
     user = User.query.get(user_id)
     user.stocks_value = 0
     for stock in Stocks.query.filter_by(follower_id=user.id).all():
@@ -91,30 +94,15 @@ def update_user_stocks(user_id):
         stock.stock_units_value = stock.stock_value * stock.stock_units
         user.stocks_value = user.stocks_value + stock.stock_units_value
 
-    db.session.commit()
+        messages.send_message(user.number, f"{stock.stock_name}: {stock.stock_diff}", stock.stock_diff)
+
+    # db.session.commit()
     # ed = time.time()
     # print(ed - st)
 
 
 def check_diff():
-    print("A")
-    messages = StockMessage()
+    """Update all users stocks, and send notification messages if needed."""
     for user in User.query.all():
-        user.stocks_value = 0
-        for stock in Stocks.query.filter_by(follower_id=user.id).all():
-            stock_follower = StockFollower(stock.stock_name)
-            try:
-                stock_follower.get_stock()
-            except IndexError:
-                messages.send_message("+972585120807", f"Error (update): {stock.stock_name}.")
-
-            stock_follower.get_stock_diff(stock.stock_price)
-
-            stock.stock_value = stock_follower.current_price
-            stock.stock_diff = stock_follower.diff_percent
-            stock.stock_units_value = stock.stock_value * stock.stock_units
-            user.stocks_value = user.stocks_value + stock.stock_units_value
-
-            messages.send_message(user.number, f"{stock.stock_name}: {stock.stock_diff}", stock.stock_diff)
-
-        db.session.commit()
+        update_user_stocks(user.id)
+    db.session.commit()
