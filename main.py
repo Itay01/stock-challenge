@@ -1,3 +1,5 @@
+from threading import Thread
+from apscheduler.schedulers.background import BackgroundScheduler
 from stockfollower import StockFollower
 from flask import Flask, render_template, redirect, url_for, flash
 from flask_bootstrap import Bootstrap
@@ -6,7 +8,6 @@ from werkzeug.exceptions import abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
-from sqlalchemy import exc
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user
 from forms import RegisterForm, LoginForm, BuyForm, SellForm
 from flask_apscheduler import APScheduler
@@ -24,12 +25,11 @@ app.config['SECRET_KEY'] = os.environ.get('APP_KEY')
 Bootstrap(app)
 
 # Set Scheduler
-scheduler = APScheduler()
-scheduler.init_app(app)
-scheduler.start()
+scheduler = BackgroundScheduler()
 
 # Connect to Database
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
+# app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///stock.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -150,11 +150,17 @@ def register():
             # Redict the user to the login page, in case the user already exists.
             flash("You've already signed up with that email, log in instead!")
             return redirect(url_for('login'))
+        elif User.query.filter_by(name=form.name.data).first():
+            flash("You've already used this name!")
+            return render_template("register.html", form=form, current_user=current_user)
 
         number_data = form.number.data
         number = number_data.replace("0", "+972", 1)
         if len(number_data) != 10 or number_data[0] != "0" or number_data[1] != '5':  # Validate phone format.
             flash("Invalid phone number format!")
+            return render_template("register.html", form=form, current_user=current_user)
+        elif User.query.filter_by(number=number).first():
+            flash("You've already used this phone number!")
             return render_template("register.html", form=form, current_user=current_user)
         elif messages.check_number(number) is False:  # Check if the user verified his phone number.
             flash("Please verify your phone number!")
@@ -175,11 +181,7 @@ def register():
             stocks_value=0
         )
         db.session.add(new_user)  # Creating new user.
-        try:
-            db.session.commit()
-        except exc.IntegrityError:  # If another user already used this name/ phone number.
-            flash("You already used this name/ phone number!")
-            return render_template("register.html", form=form, current_user=current_user)
+        db.session.commit()
 
         login_user(new_user)  # Login the user.
         return redirect(url_for("get_all_stocks"))
@@ -332,10 +334,17 @@ def sell_stock():
     return render_template("sell-modal.html", form=form, stocks=stocks)
 
 
-@scheduler.task("interval", hours=1)
 def message_users():
     check_diff()  # update all the stocks + send messages in case of 5% change.
 
+
+def run_scheduler():
+    scheduler.add_job(message_users, 'interval', hours=1)
+    scheduler.start()
+
+
+scheduler_thread = Thread(target=run_scheduler)
+scheduler_thread.start()
 
 if __name__ == "__main__":
     app.run(debug=True)
