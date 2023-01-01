@@ -10,7 +10,7 @@
           <div class="site-heading">
             <h1>Stock Challenge</h1>
             <span class="subheading">By Itay Marom</span>
-            <span class="subheading">Version 3.0</span>
+            <span class="subheading">Version 3.1</span>
           </div>
         </div>
       </div>
@@ -108,6 +108,20 @@
                 buyBtn.classList.remove("float-right");
                 sellBtn.classList.remove("float-left");
               }
+
+              window.addEventListener('scroll', function() {
+                // Get the height of the body element
+                var bodyHeight = document.body.offsetHeight;
+
+                // Get the current scroll position
+                var scrollPosition = window.pageYOffset;
+
+                // If the user has scrolled to the bottom of the screen
+                if (scrollPosition >= bodyHeight) {
+                  // Set the background size to contain
+                  document.body.style.backgroundSize = 'contain';
+                }
+              });
             </script>
           </div>
         {% endif %}

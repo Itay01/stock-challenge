@@ -1,21 +1,16 @@
-from threading import Thread
-from apscheduler.schedulers.background import BackgroundScheduler
 from stockfollower import StockFollower
 from flask import Flask, render_template, redirect, url_for, flash
 from flask_bootstrap import Bootstrap
-from datetime import date
 from werkzeug.exceptions import abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user
 from forms import RegisterForm, LoginForm, BuyForm, SellForm
-from flask_apscheduler import APScheduler
 from functools import wraps
 import os
 from datetime import datetime
 from stockmessages import StockMessage
-from updatedatabase import check_diff
 
 STOCK_POINTS = 15000
 
@@ -24,12 +19,9 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('APP_KEY')
 Bootstrap(app)
 
-# Set Scheduler
-scheduler = BackgroundScheduler()
-
 # Connect to Database
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
-# app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///stock.db"
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
+app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///stock.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -229,14 +221,14 @@ def show_stock(stock_id):
 
     # Get the number of days the user has the stock.
     date_now = datetime.now()
-    buying_date = datetime.strptime(requested_stock.date, "%B %d, %Y")
+    buying_date = datetime.strptime(requested_stock.date, "%Y-%m-%d %H:%M")
     diff_days = (date_now - buying_date).days
 
     # Calculate the profit of the user on the chosen stock.
     profit = requested_stock.stock_units * (requested_stock.stock_value - requested_stock.stock_price)
 
     return render_template("stock.html", stock=requested_stock, current_user=current_user, profit_points=profit,
-                           diff_days=diff_days)
+                           diff_days=diff_days, buying_date=buying_date.strftime("%B %d, %Y"))
 
 
 @app.route("/new-stock", methods=["GET", "POST"])
@@ -251,6 +243,16 @@ def buy_new_stock():
     if form.validate_on_submit():
         stock_symbol = StocksTable.query.filter_by(company_name=possible_stocks[int(form.stock_name.data)]).first()
         stock_symbol = stock_symbol.stock_symbol
+
+        for stock in [stock for stock in Stocks.query.filter_by(follower_id=current_user.id) if stock.stock_name == stock_symbol]:
+            current_time = datetime.now()
+            purchase_time = datetime.strptime(stock.date, "%Y-%m-%d %H:%M")
+            difference = (current_time - purchase_time).total_seconds() / 3600
+            if difference < 1:
+                flash(f"You can't buy the same stock more than once an hour! "
+                      f"please wait {round(((1 - difference) * 60))} minutes.")
+                return redirect(url_for('buy_new_stock'))
+
         try:  # Try to get the stock Price.
             stock_follower = StockFollower(stock_symbol)
             stock_follower.get_stock()
@@ -279,7 +281,7 @@ def buy_new_stock():
             stock_units=stock_units,
             stock_diff=stock_follower.diff_percent,
             stock_units_value=stock_units * stock_price,
-            date=date.today().strftime("%B %d, %Y")
+            date=datetime.now().strftime("%Y-%m-%d %H:%M")
         )
 
         current_user.stock_points = current_user.stock_points - buy_value  # Remove the money the stock cost.
@@ -333,18 +335,6 @@ def sell_stock():
         return redirect(url_for("get_all_stocks"))
     return render_template("sell-modal.html", form=form, stocks=stocks)
 
-
-def message_users():
-    check_diff()  # update all the stocks + send messages in case of 5% change.
-
-
-def run_scheduler():
-    scheduler.add_job(message_users, 'interval', hours=1)
-    scheduler.start()
-
-
-scheduler_thread = Thread(target=run_scheduler)
-scheduler_thread.start()
 
 if __name__ == "__main__":
     app.run(debug=True)

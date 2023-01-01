@@ -9,8 +9,10 @@ import os
 from stockmessages import StockMessage
 import time
 
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
+# app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///stock.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -59,7 +61,7 @@ db.create_all()
 
 def update_stocks_table():
     """Update all the stocks that are in the stock market."""
-    url = 'blob:https://www.tase.co.il/6ad9aeea-2511-4710-87e9-7a32bd135ff4'
+    # url = 'blob:https://www.tase.co.il/6ad9aeea-2511-4710-87e9-7a32bd135ff4'
     df = pd.read_csv('securitiesmarketdata.csv')
 
     db.session.query(StocksTable).delete()
@@ -74,7 +76,7 @@ def update_stocks_table():
 
 
 def update_user_stocks(user_id):
-    """Update the user stocks, and values. Send notification message if needed."""
+    """Update the user's stocks, and values. Send notification message if needed."""
     # st = time.time()
     messages = StockMessage()
 
