@@ -87,7 +87,7 @@ def update_user_stocks(user_id):
         try:
             stock_follower.get_stock()
         except IndexError:
-            messages.send_message("+972585120807", f"Error (update): {stock.stock_name}.")
+            messages.send_message("itaymarom07@gmail.com", f"Error (update): {stock.stock_name}.")
 
         stock_follower.get_stock_diff(stock.stock_price)
 
@@ -96,7 +96,7 @@ def update_user_stocks(user_id):
         stock.stock_units_value = stock.stock_value * stock.stock_units
         user.stocks_value = user.stocks_value + stock.stock_units_value
 
-        messages.send_message(user.number, f"{stock.stock_name}: {stock.stock_diff}", stock.stock_diff)
+        messages.send_message(user.email, f"{stock.stock_name}: {stock.stock_diff}", stock.stock_diff)
 
     # db.session.commit()
     # ed = time.time()

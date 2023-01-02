@@ -154,9 +154,9 @@ def register():
         elif User.query.filter_by(number=number).first():
             flash("You've already used this phone number!")
             return render_template("register.html", form=form, current_user=current_user)
-        elif messages.check_number(number) is False:  # Check if the user verified his phone number.
-            flash("Please verify your phone number!")
-            return render_template("register.html", form=form, current_user=current_user)
+        # elif messages.check_number(number) is False:  # Check if the user verified his phone number.
+        #     flash("Please verify your phone number!")
+        #     return render_template("register.html", form=form, current_user=current_user)
 
         hash_and_salted_password = generate_password_hash(  # Encrypting the password of the user.
             form.password.data,
