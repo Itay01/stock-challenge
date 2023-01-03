@@ -37,7 +37,7 @@ class StockMessage:
     #         return True
     #     return False
 
-    def send_message(self, email, send_message, diff_percent=" 0 "):
+    def send_message(self, email, send_message, diff_percent=" 6 "):
         """Send email to the user in case the difference between the buying price and the current value,
         is bigger than 5%. """
         if float(diff_percent[1:-1]) > 5:
