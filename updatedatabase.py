@@ -11,7 +11,7 @@ import time
 
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 # app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///stock.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -86,10 +86,9 @@ def update_user_stocks(user_id):
         stock_follower = StockFollower(stock.stock_name)
         try:
             stock_follower.get_stock()
-        except IndexError:
+            stock_follower.get_stock_diff(stock.stock_price)
+        except TypeError:
             messages.send_message("itaymarom07@gmail.com", f"Error (update): {stock.stock_name}.")
-
-        stock_follower.get_stock_diff(stock.stock_price)
 
         stock.stock_value = stock_follower.current_price
         stock.stock_diff = stock_follower.diff_percent
@@ -108,3 +107,6 @@ def check_diff():
     for user in User.query.all():
         update_user_stocks(user.id)
     db.session.commit()
+
+
+check_diff()

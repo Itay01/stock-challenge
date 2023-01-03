@@ -27,8 +27,8 @@ class StockFollower:
         """Calculate the difference of the buying price and the current value (in percentage).
         Update the diff_percent to the text that is shown in the main screen, and the notification messages."""
         difference = float(self.current_price) - float(buying_price)
-        if difference > 0:
-            up_down = "🔺"
+        if difference >= 0:
+            up_down = "+"
         else:
-            up_down = "🔻"
+            up_down = "-"
         self.diff_percent = f"{up_down}{abs(round((difference / float(buying_price)) * 100, 2))} %"

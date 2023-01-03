@@ -76,7 +76,20 @@
                   <td>
                     <script>document.write(Math.round(({{ stock.stock_units_value }} + Number.EPSILON) * 100) / 100);</script>
                      ₪</td>
-                  <td>{{ stock.stock_diff }}</td>
+                  <td id="percentage"><b>{{ stock.stock_diff }}</b></td>
+                  <script>
+                    $(document).ready(function(){
+                      var tdElement = document.getElementById("percentage");
+                      var firstLetter = tdElement.textContent[0];
+                      var color = "";
+                      if (firstLetter == "+") {
+                        color = "green";
+                      } else {
+                        color = "red";
+                      }
+                      tdElement.style.color = color;
+                    })
+                  </script>
                 </tr>
               {% endfor %}
             </table>
@@ -108,20 +121,6 @@
                 buyBtn.classList.remove("float-right");
                 sellBtn.classList.remove("float-left");
               }
-
-              window.addEventListener('scroll', function() {
-                // Get the height of the body element
-                var bodyHeight = document.body.offsetHeight;
-
-                // Get the current scroll position
-                var scrollPosition = window.pageYOffset;
-
-                // If the user has scrolled to the bottom of the screen
-                if (scrollPosition >= bodyHeight) {
-                  // Set the background size to contain
-                  document.body.style.backgroundSize = 'contain';
-                }
-              });
             </script>
           </div>
         {% endif %}
