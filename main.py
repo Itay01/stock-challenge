@@ -319,6 +319,9 @@ def sell_stock():
             # The stock worth less than the entered price the user wants to sell.
             flash(f"Your stock is worth only {round(stock_units_value, 2)}!")
             return redirect(url_for('sell_stock'))
+        elif sell_value <= 0:
+            flash(f"The sell value must be more than 0 shekels!")
+            return redirect(url_for('sell_stock'))
         else:  # If the stock worth more than the specified value to sell.
             current_user.stock_points = current_user.stock_points + sell_value  # Add the money the user sold.
             current_user.stocks_value = current_user.stocks_value - sell_value  # Update the stocks value.
