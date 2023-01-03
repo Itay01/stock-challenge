@@ -52,7 +52,7 @@
  <!-- Main Content -->
   <div class="container">
     <div class="row">
-      <div class="col-lg-8 col-md-10 mx-auto">
+      <div class="col-lg-9 col-md-11 mx-auto">
         <div class="post-preview">
             {% if current_user.is_authenticated %}
               <h4>Cash Balance: <script>document.write(Math.round(({{ current_user.stock_points }} + Number.EPSILON) * 100) / 100);</script> ₪</h4>
@@ -76,22 +76,24 @@
                   <td>
                     <script>document.write(Math.round(({{ stock.stock_units_value }} + Number.EPSILON) * 100) / 100);</script>
                      ₪</td>
-                  <td id="percentage"><b>{{ stock.stock_diff }}</b></td>
-                  <script>
-                    $(document).ready(function(){
-                      var tdElement = document.getElementById("percentage");
-                      var firstLetter = tdElement.textContent[0];
-                      var color = "";
-                      if (firstLetter == "+") {
-                        color = "green";
-                      } else {
-                        color = "red";
-                      }
-                      tdElement.style.color = color;
-                    })
-                  </script>
+                  <td class="percentage"><b>{{ stock.stock_diff }}</b></td>
                 </tr>
               {% endfor %}
+              <script>
+                $(document).ready(function(){
+                  var tdElements = document.getElementsByClassName("percentage");
+                  for (let i = 0; i < tdElements.length; i++) {
+                    var firstLetter = tdElements[i].textContent[0];
+                    var color = "";
+                    if (firstLetter == "+") {
+                      color = "green";
+                    } else {
+                      color = "red";
+                    }
+                    tdElements[i].style.color = color;
+                  }
+                })
+              </script>
             </table>
         </div>
         <hr>

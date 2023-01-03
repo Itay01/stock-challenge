@@ -87,13 +87,13 @@ def update_user_stocks(user_id):
         try:
             stock_follower.get_stock()
             stock_follower.get_stock_diff(stock.stock_price)
+
+            stock.stock_value = stock_follower.current_price
+            stock.stock_diff = stock_follower.diff_percent
+            stock.stock_units_value = stock.stock_value * stock.stock_units
+            user.stocks_value = user.stocks_value + stock.stock_units_value
         except TypeError:
             messages.send_message("itaymarom07@gmail.com", f"Error (update): {stock.stock_name}.")
-
-        stock.stock_value = stock_follower.current_price
-        stock.stock_diff = stock_follower.diff_percent
-        stock.stock_units_value = stock.stock_value * stock.stock_units
-        user.stocks_value = user.stocks_value + stock.stock_units_value
 
         messages.send_message(user.email, f"{stock.stock_name}: {stock.stock_diff}", stock.stock_diff)
 
