@@ -228,7 +228,7 @@ def show_stock(stock_id):
     profit = requested_stock.stock_units * (requested_stock.stock_value - requested_stock.stock_price)
 
     return render_template("stock.html", stock=requested_stock, current_user=current_user, profit_points=profit,
-                           diff_days=diff_days, buying_date=buying_date.strftime("%B %d, %Y"))
+                           diff_days=diff_days, buying_date=buying_date.strftime('%B %d, %Y at %H:%M'))
 
 
 @app.route("/new-stock", methods=["GET", "POST"])
@@ -244,20 +244,22 @@ def buy_new_stock():
         stock_symbol = StocksTable.query.filter_by(company_name=possible_stocks[int(form.stock_name.data)]).first()
         stock_symbol = stock_symbol.stock_symbol
 
-        for stock in [stock for stock in Stocks.query.filter_by(follower_id=current_user.id) if stock.stock_name == stock_symbol]:
-            current_time = datetime.now()
-            purchase_time = datetime.strptime(stock.date, "%Y-%m-%d %H:%M")
-            difference = (current_time - purchase_time).total_seconds() / 3600
-            if difference < 1:
-                flash(f"You can't buy the same stock more than once an hour! "
-                      f"please wait {round(((1 - difference) * 60))} minutes.")
-                return redirect(url_for('buy_new_stock'))
+        # for stock in [stock for stock in Stocks.query.filter_by(follower_id=current_user.id)
+        # if stock.stock_name == stock_symbol]:
+        # current_time = datetime.now()
+        # purchase_time = datetime.strptime(stock.date, "%Y-%m-%d %H:%M")
+        # difference = (current_time - purchase_time).total_seconds() / 3600
+        # if difference < 1:
+        #     flash(f"You can't buy the same stock more than once an hour! "
+        #           f"please wait {round(((1 - difference) * 60))} minutes.")
+        #     return redirect(url_for('buy_new_stock'))
 
         try:  # Try to get the stock Price.
             stock_follower = StockFollower(stock_symbol)
             stock_follower.get_stock()
-        except IndexError:  # The stock doesn't exists.
-            flash('Invalid stock symbol!')
+        except TypeError:  # The stock doesn't exists/ error.
+            flash('Sorry, something went wrong. Please try again later. If this error keeps occurring let me know on '
+                  'the contact me page.')
             return redirect(url_for('buy_new_stock'))
 
         stock_price = float(stock_follower.current_price)

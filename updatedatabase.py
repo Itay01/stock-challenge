@@ -1,14 +1,14 @@
+import json
 from stockfollower import StockFollower
 from flask import Flask
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
-from stockmessages import StockMessage
 from sqlalchemy.orm import relationship
 import pandas as pd
 import os
 from stockmessages import StockMessage
+import yfinance as yf
 import time
-
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
@@ -74,6 +74,26 @@ def update_stocks_table():
 
     db.session.commit()
 
+    # # url = 'blob:https://www.tase.co.il/6ad9aeea-2511-4710-87e9-7a32bd135ff4'
+    # df = pd.read_csv('securitiesmarketdata.csv')
+    #
+    # db.session.query(StocksTable).delete()
+    # failed_update = []
+    # for symbol in df['Symbol']:
+    #     try:
+    #         stock_follower = StockFollower(symbol)
+    #         stock_follower.get_company_name()
+    #     except:
+    #         failed_update.append(symbol)
+    #     else:
+    #         new_stock = StocksTable(
+    #             stock_symbol=symbol,
+    #             company_name=stock_follower.company_name
+    #         )
+    #         db.session.add(new_stock)
+    # print(failed_update)
+    # db.session.commit()
+
 
 def update_user_stocks(user_id):
     """Update the user's stocks, and values. Send notification message if needed."""
@@ -87,15 +107,20 @@ def update_user_stocks(user_id):
         try:
             stock_follower.get_stock()
             stock_follower.get_stock_diff(stock.stock_price)
-
+        except TypeError:
+            messages.send_message("itaymarom07@gmail.com", f"Error (update): {stock.stock_name}.")
+            user.stocks_value = user.stocks_value + stock.stock_units_value
+        except json.decoder.JSONDecodeError:
+            messages.send_message("itaymarom07@gmail.com", f"Error (update): {stock.stock_name}.")
+            user.stocks_value = user.stocks_value + stock.stock_units_value
+        else:
             stock.stock_value = stock_follower.current_price
             stock.stock_diff = stock_follower.diff_percent
             stock.stock_units_value = stock.stock_value * stock.stock_units
             user.stocks_value = user.stocks_value + stock.stock_units_value
-        except TypeError:
-            messages.send_message("itaymarom07@gmail.com", f"Error (update): {stock.stock_name}.")
 
-        messages.send_message(user.email, f"{stock.stock_name}: {stock.stock_diff}", stock.stock_diff)
+        # if user.email != os.environ.get("UNEMAIL"):
+        #     messages.send_message(user.email, f"{stock.stock_name}: {stock.stock_diff}", stock.stock_diff)
 
     # db.session.commit()
     # ed = time.time()
@@ -109,4 +134,4 @@ def check_diff():
     db.session.commit()
 
 
-check_diff()
+update_stocks_table()

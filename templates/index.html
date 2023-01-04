@@ -80,19 +80,17 @@
                 </tr>
               {% endfor %}
               <script>
-                $(document).ready(function(){
-                  var tdElements = document.getElementsByClassName("percentage");
-                  for (let i = 0; i < tdElements.length; i++) {
-                    var firstLetter = tdElements[i].textContent[0];
-                    var color = "";
-                    if (firstLetter == "+") {
-                      color = "green";
-                    } else {
-                      color = "red";
-                    }
-                    tdElements[i].style.color = color;
+                var tdElements = document.getElementsByClassName("percentage");
+                for (let i = 0; i < tdElements.length; i++) {
+                  var firstLetter = tdElements[i].textContent[0];
+                  var color = "";
+                  if (firstLetter == "+") {
+                    color = "green";
+                  } else {
+                    color = "red";
                   }
-                })
+                  tdElements[i].style.color = color;
+                }
               </script>
             </table>
         </div>

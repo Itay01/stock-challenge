@@ -29,7 +29,19 @@
           <p>Buying Price: <script>document.write(Math.round(({{ stock.stock_price }} + Number.EPSILON) * 100) / 100);</script> ₪</p>
           <p>Current Price: <script>document.write(Math.round(({{ stock.stock_value }} + Number.EPSILON) * 100) / 100);</script> ₪</p>
           <p>Days Owned: {{ diff_days }}</p>
-          <p>Change (Percentage): {{ stock.stock_diff }}</p>
+          <p>Change (Percentage): <span class="percentage">{{ stock.stock_diff }}</span></p>
+          <script>
+            var pElement = document.getElementsByClassName("percentage")[0];
+            var firstLetter = pElement.textContent[0];
+            var color = "";
+            if (firstLetter == "+") {
+              color = "green";
+            } else {
+              color = "red";
+            }
+            pElement.style.color = color;
+          </script>
+
           <p>Profit: <script>document.write(Math.round(({{ profit_points }} + Number.EPSILON) * 100) / 100);</script> ₪</p>
           <div class="clearfix">
              <a class="btn btn-primary float-right" href="https://finance.yahoo.com/quote/{{ stock.stock_name }}.TA" target="_blank">More Details</a>
