@@ -352,12 +352,11 @@ def about():
 
 @app.route("/contact", methods=["GET", "POST"])
 def contact():
+    if not current_user.is_authenticated:
+        flash("You need to login or register to contact me.")
+        return redirect(url_for("login"))
+
     if request.method == "POST":
-
-        if not current_user.is_authenticated:
-            flash("You need to login or register to contact.")
-            return redirect(url_for("login"))
-
         data = request.form
         messages.contact_message(data["name"], data["email"], data["phone"], data["message"])
         return render_template("contact.html", msg_sent=True, current_user=current_user)
