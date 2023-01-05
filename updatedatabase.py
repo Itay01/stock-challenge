@@ -121,7 +121,7 @@ def update_user_stocks(user_id):
         tries -= 1
 
     if updates_left:
-        messages.send_message("itaymarom07@gmail.com",
+        messages.send_message(os.environ.get("MYEMAIL"),
                               f"Error (update): {', '.join([stock.stock_name for stock in updates_left])}.")
 
     # if user.email != os.environ.get("UNEMAIL"):

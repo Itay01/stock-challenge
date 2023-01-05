@@ -1,5 +1,5 @@
 from stockfollower import StockFollower
-from flask import Flask, render_template, redirect, url_for, flash
+from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_bootstrap import Bootstrap
 from werkzeug.exceptions import abort
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -343,6 +343,25 @@ def sell_stock():
             db.session.commit()
         return redirect(url_for("get_all_stocks"))
     return render_template("sell-modal.html", form=form, stocks=stocks)
+
+
+@app.route("/about")
+def about():
+    return render_template("about.html", current_user=current_user)
+
+
+@app.route("/contact", methods=["GET", "POST"])
+def contact():
+    if request.method == "POST":
+
+        if not current_user.is_authenticated:
+            flash("You need to login or register to contact.")
+            return redirect(url_for("login"))
+
+        data = request.form
+        messages.contact_message(data["name"], data["email"], data["phone"], data["message"])
+        return render_template("contact.html", msg_sent=True, current_user=current_user)
+    return render_template("contact.html", msg_sent=False, current_user=current_user)
 
 
 if __name__ == "__main__":

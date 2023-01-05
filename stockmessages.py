@@ -51,3 +51,9 @@ class StockMessage:
         #         from_=f"{VIRTUAL_TWILIO_NUMBER}",
         #         to=f"{number}"
         #     )
+
+    def contact_message(self, name, email, phone, message):
+        with app.app_context():
+            msg = Message("New Message", sender=app.config["MAIL_USERNAME"], recipients=[os.environ.get("MY_EMAIL")])
+            msg.body = f"Name: {name}\nEmail: {email}\nPhone: {phone}\nMessage: {message}"
+            mail.send(msg)
