@@ -135,11 +135,3 @@ def check_diff():
 
 
 check_diff()
-
-# def check_all_users():
-#     for user in User.query.all():
-#         user_stocks = 0
-#         if user.stocks_value + user.stock_points > 15330:
-#             print(user.name, user.id)
-#
-# check_all_users()

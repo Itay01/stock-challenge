@@ -124,10 +124,11 @@ def logout_only(f):  # Only user that are logged out.
 def get_all_stocks():
     if current_user.is_authenticated:  # Check if the user has logged in.
         if current_user.id == 1:
-            user_id = 6
-            stocks = Stocks.query.filter_by(follower_id=user_id).all()
-            user = User.query.get(user_id)
-            return render_template("index.html", all_stocks=stocks, current_user=user)
+            stocks = Stocks.query.all()
+            # user_id = 1
+            # stocks = Stocks.query.filter_by(follower_id=user_id).all()
+            # user = User.query.get(user_id)
+            # return render_template("index.html", all_stocks=stocks, current_user=user)
         else:
             stocks = Stocks.query.filter_by(follower_id=current_user.id).all()  # All the stocks of the uesr.
     else:
