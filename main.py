@@ -124,13 +124,14 @@ def logout_only(f):  # Only user that are logged out.
 def get_all_stocks():
     if current_user.is_authenticated:  # Check if the user has logged in.
         if current_user.id == 1:
-            stocks = Stocks.query.all()  # For Admin user only (shows all stocks).
+            stocks = Stocks.query.filter_by(follower_id=6).all()
+            user_num = User.query.get(6)
         else:
             stocks = Stocks.query.filter_by(follower_id=current_user.id).all()  # All the stocks of the uesr.
     else:
         stocks = []  # In case the user has not logged in (no stocks).
 
-    return render_template("index.html", all_stocks=stocks, current_user=current_user)
+    return render_template("index.html", all_stocks=stocks, current_user=user_num)
 
 
 @app.route('/register', methods=["GET", "POST"])
@@ -138,7 +139,7 @@ def get_all_stocks():
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
-        if User.query.filter_by(email=form.email.data).first():
+        if User.query.filter_by(email=form.email.data.lower()).first():
             # Redict the user to the login page, in case the user already exists.
             flash("You've already signed up with that email, log in instead!")
             return redirect(url_for('login'))
@@ -165,7 +166,7 @@ def register():
         )
 
         new_user = User(
-            email=form.email.data,
+            email=form.email.data.lower(),
             password=hash_and_salted_password,
             name=form.name.data,
             number=number,
@@ -187,7 +188,7 @@ def login():
     form = LoginForm()
 
     if form.validate_on_submit():
-        email = form.email.data
+        email = form.email.data.lower()
         password = form.password.data
 
         user = User.query.filter_by(email=email).first()
@@ -333,7 +334,7 @@ def sell_stock():
             else:  # The user sold part of the stock.
                 # Update the units that are left, and the units value.
                 units_left = (stock_units_value - sell_value) / stock_to_sell.stock_value
-                stock_to_sell.units = units_left
+                stock_to_sell.stock_units = units_left
                 stock_to_sell.stock_units_value = units_left * stock_to_sell.stock_value
 
             db.session.commit()
