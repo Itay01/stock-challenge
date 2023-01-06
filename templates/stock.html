@@ -51,14 +51,15 @@
       </div>
     </div>
   </article>
-          <!-- TradingView Widget BEGIN -->
-          <div class="tradingview-widget-container">
+  </div>
+    <!-- TradingView Widget BEGIN -->
+    <div class="tradingview-widget-container mx-auto">
             <div id="tradingview_e610c"></div>
             <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
             <script type="text/javascript">
             new TradingView.widget(
             {
-            "width": 980,
+            "width": (screen.width / 2),
             "height": 610,
             "symbol": "TASE:{{ stock.stock_name }}",
             "timezone": "Asia/Jerusalem",
@@ -73,8 +74,8 @@
             "container_id": "tradingview_e610c"
           }
             );
-            </script>
-          </div>
-          <!-- TradingView Widget END -->
+          </script>
+    </div>
+    <!-- TradingView Widget END -->
   <hr>
 {% include "footer.html" %}
