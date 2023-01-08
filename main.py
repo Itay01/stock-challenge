@@ -13,7 +13,6 @@ from datetime import datetime
 from stockmessages import StockMessage
 
 STOCK_POINTS = 15000
-
 # Configure App
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('APP_KEY')
@@ -45,7 +44,7 @@ class User(UserMixin, db.Model):  # User info + Stocks value
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(100))
     name = db.Column(db.String(100), unique=True)
-    stock_points = db.Column(db.Integer, nullable=False)
+    stock_points = db.Column(db.Float, nullable=False)
     number = db.Column(db.String(100), unique=True, nullable=False)
     stocks_value = db.Column(db.Float, nullable=False)
 
@@ -124,11 +123,11 @@ def logout_only(f):  # Only user that are logged out.
 def get_all_stocks():
     if current_user.is_authenticated:  # Check if the user has logged in.
         if current_user.id == 1:
-            stocks = Stocks.query.all()
-            # user_id = 1
-            # stocks = Stocks.query.filter_by(follower_id=user_id).all()
-            # user = User.query.get(user_id)
-            # return render_template("index.html", all_stocks=stocks, current_user=user)
+            # stocks = Stocks.query.all()
+            user_id = 1
+            stocks = Stocks.query.filter_by(follower_id=user_id).all()
+            user = User.query.get(user_id)
+            return render_template("index.html", all_stocks=stocks, current_user=user)
         else:
             stocks = Stocks.query.filter_by(follower_id=current_user.id).all()  # All the stocks of the uesr.
     else:
@@ -270,6 +269,9 @@ def buy_new_stock():
         buy_value = float(form.buy_value.data)
         stock_units = buy_value / stock_price
 
+        if buy_value <= 0:
+            flash('The purchase value must be positive!')
+            return redirect(url_for('buy_new_stock'))
         if current_user.stock_points - buy_value < 0:  # Check if the user has enough money to buy the stock.
             flash('You do not have enough money!')
             return redirect(url_for('buy_new_stock'))
@@ -332,7 +334,7 @@ def sell_stock():
             current_user.stock_points = current_user.stock_points + sell_value  # Add the money the user sold.
             current_user.stocks_value = current_user.stocks_value - sell_value  # Update the stocks value.
 
-            if round(stock_units_value, 2) == sell_value:  # Float numbers are not accurate, and they must be rounded.
+            if round(stock_units_value, 2) == round(sell_value, 2):  # Float numbers are not accurate, and they must be rounded.
                 db.session.delete(stock_to_sell)  # Delete the stock from the database.
             else:  # The user sold part of the stock.
                 # Update the units that are left, and the units value.

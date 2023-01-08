@@ -110,8 +110,12 @@
             <p><a id="buy-button" class="btn btn-primary float-right" href="{{ url_for('buy_new_stock') }}">Buy New Stock</a></p>
             <p><a id="sell-button" class="btn btn-danger float-left" href="{{ url_for('sell_stock') }}">Sell My Stock</a></p>
             <script>
-              let isMobile = window.navigator.userAgentData.mobile;
-              if (isMobile) {
+              function isMobile() {
+                var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+                return (/iPhone|iPad|iPod|Android|BlackBerry|Opera Mini|IEMobile/).test(userAgent);
+              }
+
+              if (isMobile()) {
                 var div = document.getElementById("btn-align");
                 div.classList.add("col", "text-center");
 

@@ -1,4 +1,5 @@
 import json
+import requests
 from stockfollower import StockFollower
 from flask import Flask
 from flask_login import UserMixin
@@ -22,7 +23,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(100))
     name = db.Column(db.String(100), unique=True)
-    stock_points = db.Column(db.Integer, nullable=False)
+    stock_points = db.Column(db.Float, nullable=False)
     number = db.Column(db.String(100), unique=True, nullable=False)
     stocks_value = db.Column(db.Float, nullable=False)
 
@@ -108,8 +109,9 @@ def update_user_stocks(user_id):
             try:
                 stock_follower.get_stock()
                 stock_follower.get_stock_diff(stock.stock_price)
-            except (TypeError, json.decoder.JSONDecodeError):
-                user.stocks_value = user.stocks_value + stock.stock_units_value
+            except (TypeError, json.decoder.JSONDecodeError, requests.exceptions.ReadTimeout):
+                if tries == 1:
+                    user.stocks_value = user.stocks_value + stock.stock_units_value
             else:
                 stock.stock_value = stock_follower.current_price
                 stock.stock_diff = stock_follower.diff_percent
@@ -117,7 +119,6 @@ def update_user_stocks(user_id):
                 user.stocks_value = user.stocks_value + stock.stock_units_value
 
                 updates_left.remove(stock)
-
         tries -= 1
 
     if updates_left:
